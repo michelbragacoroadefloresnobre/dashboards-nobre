@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #F6F4F0;
+  --color-bg-card: #FFFFFF;
+  --color-bg-card-alt: #FAFAF8;
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #6B6B6B;
+  --color-text-muted: #9A9A9A;
+  --color-accent-green: #2D6A4F;
+  --color-accent-green-light: #D8F3DC;
+  --color-accent-gold: #C8963E;
+  --color-accent-gold-light: #FFF3D6;
+  --color-accent-red: #C0392B;
+  --color-accent-red-light: #FDECEA;
+  --color-border: #E8E6E1;
+  --color-border-light: #F0EEEA;
+
+  --font-display: "Playfair Display", serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-family-body: "DM Sans", sans-serif;
+  --font-family-display: "Playfair Display", serif;
+}
+
+* {
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* ═══ CAROUSEL TRANSITIONS ═══ */
+.carousel-page {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  pointer-events: none;
+}
+.carousel-page.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+.carousel-page.exit-left {
+  opacity: 0;
+  transform: translateX(-40px);
+}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes barGrow {
+  from { width: 0; }
+}
+@keyframes shimmer {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.animate-slide-down { animation: slideDown 0.5s ease-out; }
+.animate-fade-up { animation: fadeUp 0.6s ease-out both; }
+.animate-fade-up-1 { animation: fadeUp 0.6s ease-out 0.1s both; }
+.animate-fade-up-2 { animation: fadeUp 0.6s ease-out 0.2s both; }
+.animate-fade-up-3 { animation: fadeUp 0.6s ease-out 0.3s both; }
+.animate-bar-grow { animation: barGrow 1.2s ease-out both; }
+.animate-shimmer { display: inline-block; animation: shimmer 2s ease-in-out infinite; }
+.animate-pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
