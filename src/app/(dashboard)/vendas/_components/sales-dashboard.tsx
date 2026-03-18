@@ -1,33 +1,57 @@
-import { Conquests } from "@/app/(dashboard)/vendas/_components/conquests";
-import { DailyRanking } from "@/app/(dashboard)/vendas/_components/daily-ranking";
-import { HeaderBanner } from "@/app/(dashboard)/vendas/_components/header-banner";
-import { MonthlyRanking } from "@/app/(dashboard)/vendas/_components/monthly-ranking";
-import { OperationKPIs } from "@/app/(dashboard)/vendas/_components/operation-kpis";
-import { SalesRace } from "@/app/(dashboard)/vendas/_components/sales-race";
-import { WeeklyRevenueChart } from "@/app/(dashboard)/vendas/_components/weekly-revenue-chart";
+"use client";
+
+import { useDashboardData } from "@/app/(dashboard)/vendas/_hooks/use-dashboard-data";
+import { Conquests } from "./conquests";
+import { DailyRanking } from "./daily-ranking";
+import { HeaderBanner } from "./header-banner";
+import { MonthlyRanking } from "./monthly-ranking";
+import { OperationKPIs } from "./operation-kpis";
+import { SalesRace } from "./sales-race";
+import { WeeklyRevenueChart } from "./weekly-revenue-chart";
 
 export function SalesDashboard() {
+  const { data, isLoading, isError } = useDashboardData();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-text-muted text-sm animate-pulse">
+          Carregando dashboard...
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-accent-red text-sm">
+          Erro ao carregar dados. Tentando novamente...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-[0.90fr_1.2fr_0.90fr] grid-rows-[auto_1fr] gap-5 p-6 h-full max-w-480 mx-auto">
-      {/* Header with records — always visible */}
-      <HeaderBanner />
+      <HeaderBanner data={data.headerBanner} />
 
       {/* Col Left */}
       <div className="flex flex-col gap-5 min-h-0 animate-fade-up-1">
-        <MonthlyRanking />
+        <MonthlyRanking data={data.monthlyRanking} />
       </div>
 
       {/* Col Center */}
       <div className="flex flex-col gap-5 min-h-0 animate-fade-up-2">
-        <OperationKPIs />
-        <SalesRace />
-        <WeeklyRevenueChart />
+        <OperationKPIs data={data.operationKpis} />
+        <SalesRace data={data.salesRace} />
+        <WeeklyRevenueChart data={data.weeklyRevenueChart} />
       </div>
 
       {/* Col Right */}
       <div className="flex flex-col gap-5 min-h-0 animate-fade-up-3">
-        <DailyRanking />
-        <Conquests />
+        <DailyRanking data={data.dailyRanking} />
+        <Conquests data={data.conquests} />
       </div>
     </div>
   );

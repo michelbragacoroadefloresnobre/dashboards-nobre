@@ -2,23 +2,31 @@
 "use client";
 
 import { useCarousel } from "@/app/(dashboard)/_hooks/use-carousel";
-import { conquistasData } from "@/data/dashboard";
+import type { OperationResponse } from "@/app/api/operation/types";
 import { Carousel } from "./carousel";
 
+const TOTAL_SLOTS = 9;
 const PER_PAGE = 3;
 
-export function Conquests() {
-  const totalPages = Math.ceil(conquistasData.length / PER_PAGE);
+interface ConquestsProps {
+  data: OperationResponse["conquests"];
+}
+
+export function Conquests({ data }: ConquestsProps) {
+  const slots = buildSlots(data);
+  const totalPages = Math.ceil(slots.length / PER_PAGE);
   const carousel = useCarousel(totalPages);
 
   const pages = Array.from({ length: totalPages }, (_, p) => {
-    const slice = conquistasData.slice(p * PER_PAGE, (p + 1) * PER_PAGE);
+    const slice = slots.slice(p * PER_PAGE, (p + 1) * PER_PAGE);
     return (
       <div key={p} className="grid grid-cols-3 gap-3">
         {slice.map((c, i) => (
           <div
             key={i}
-            className="text-center p-3.5 px-2.5 rounded-[10px] bg-bg-card-alt border border-border-light shadow-sm flex flex-col items-center"
+            className={`text-center p-3.5 px-2.5 rounded-[10px] border border-border-light shadow-sm flex flex-col items-center ${
+              c.locked ? "bg-bg-card-alt/60 opacity-50" : "bg-bg-card-alt"
+            }`}
           >
             {/* Área da Imagem do Produto */}
             <div className="w-20 h-20 rounded-xl mx-auto mb-2.5 bg-gradient-to-br from-[#e8e8e8] to-[#d4d4d4] flex items-center justify-center overflow-hidden shrink-0">
@@ -31,7 +39,7 @@ export function Conquests() {
                   className="object-cover w-full h-full"
                 />
               ) : (
-                <span className="text-[30px]">{c.emoji}</span>
+                <span className="text-[30px]">🌸</span>
               )}
             </div>
 
@@ -71,4 +79,30 @@ export function Conquests() {
       </div>
     </div>
   );
+}
+
+interface Slot {
+  name: string;
+  price: string;
+  imageUrl?: string;
+  sellerName?: string;
+  locked: boolean;
+}
+
+function buildSlots(conquests: OperationResponse["conquests"]): Slot[] {
+  const filled: Slot[] = conquests.slice(0, TOTAL_SLOTS).map((c) => ({
+    ...c,
+    locked: false,
+  }));
+
+  const remaining = TOTAL_SLOTS - filled.length;
+  for (let i = 0; i < remaining; i++) {
+    filled.push({
+      name: "Em breve",
+      price: "???",
+      locked: true,
+    });
+  }
+
+  return filled;
 }

@@ -4,9 +4,20 @@ import type { ExternalOrderSummary } from "./types";
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
+  maximumFractionDigits: 0,
 });
 
-export function formatCurrency(value: number): string {
+const currencyFormatterWithDigit = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  maximumFractionDigits: 2,
+});
+
+export function formatCurrency(
+  value: number,
+  withDigit: boolean = false,
+): string {
+  if (withDigit) return currencyFormatterWithDigit.format(value);
   return currencyFormatter.format(value);
 }
 
@@ -76,7 +87,7 @@ export function buildMonthlyRanking(orders: ExternalOrderSummary[]) {
     name: s.name,
     fat: formatCurrency(s.fat),
     orders: s.orders,
-    tm: formatCurrency(s.tm),
+    tm: formatCurrency(s.tm, true),
   }));
 }
 
@@ -104,10 +115,14 @@ export function buildDailyRanking(orders: ExternalOrderSummary[]) {
     }
   }
 
-  const sellers = Array.from(sellerMap.values());
+  const sellers = Array.from(sellerMap.values()).map((s) => ({
+    ...s,
+    tm: s.orders > 0 ? s.fat / s.orders : 0,
+  }));
 
   sellers.sort((a, b) => {
     if (b.fat !== a.fat) return b.fat - a.fat;
+    if (b.tm !== a.tm) return b.tm - a.tm;
     return b.orders - a.orders;
   });
 
@@ -116,6 +131,7 @@ export function buildDailyRanking(orders: ExternalOrderSummary[]) {
     initials: getInitials(s.name),
     name: s.name,
     fat: formatCurrency(s.fat),
-    orders: s.orders === 1 ? "1 pedido" : `${s.orders} pedidos`,
+    orders: s.orders,
+    tm: formatCurrency(s.tm, true),
   }));
 }

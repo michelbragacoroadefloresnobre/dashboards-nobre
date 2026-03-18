@@ -1,4 +1,9 @@
-import { teamsData, todayProfitData } from "@/data/dashboard";
+import type { OperationResponse } from "@/app/api/operation/types";
+
+const TEAM_EMOJIS: Record<string, string> = {
+  tulum: "🏁",
+  dubai: "🚀",
+};
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -8,18 +13,21 @@ function getDaysInMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 }
 
-export function SalesRace() {
+interface SalesRaceProps {
+  data: OperationResponse["salesRace"];
+}
+
+export function SalesRace({ data }: SalesRaceProps) {
   const now = new Date();
   const currentDay = now.getDate();
   const totalDays = getDaysInMonth(now);
   const monthProgress = currentDay / totalDays;
 
-  const sorted = [...teamsData].sort((a, b) => b.profit - a.profit);
-  const leader = sorted[0];
-  const difference = sorted[0].profit - sorted[1].profit;
+  const leader = data.teams[0];
+  if (!leader) return null;
 
-  const entries = sorted.map((team) => {
-    const ratio = team.profit / leader.profit;
+  const entries = data.teams.map((team) => {
+    const ratio = leader.averageProfit > 0 ? team.averageProfit / leader.averageProfit : 0;
     const width = ratio * monthProgress * 100;
     return { ...team, width: `${Math.max(width, 8)}%` };
   });
@@ -50,22 +58,25 @@ export function SalesRace() {
         role="list"
         aria-label="Ranking de lucro por equipe"
       >
-        {entries.map((team, i) => (
-          <RaceEntry
-            key={team.name}
-            position={`${i + 1}º`}
-            name={`${team.emoji} ${team.name}`}
-            value={formatCurrency(team.profit)}
-            width={team.width}
-            gold={i === 0}
-          />
-        ))}
+        {entries.map((team, i) => {
+          const emoji = TEAM_EMOJIS[team.name] ?? "🏁";
+          return (
+            <RaceEntry
+              key={team.name}
+              position={`${i + 1}º`}
+              name={`${emoji} ${team.name}`}
+              value={formatCurrency(team.averageProfit)}
+              width={team.width}
+              gold={i === 0}
+            />
+          );
+        })}
       </div>
 
       {/* Footer: difference + today's profit */}
       <div className="flex items-center justify-between mt-4 bg-white/6 border border-white/8 rounded-xl px-4 py-3">
         <span className="text-sm font-medium opacity-60">
-          ↕ {formatCurrency(difference)} de diferença
+          ↕ {formatCurrency(data.profitDifference)} de diferença
         </span>
         <div className="flex items-center gap-2.5">
           <span className="text-xs uppercase tracking-widest opacity-40 font-semibold">
@@ -73,9 +84,9 @@ export function SalesRace() {
           </span>
           <span
             className="text-base font-bold text-accent-gold"
-            aria-label={`Lucro parcial de hoje: ${formatCurrency(todayProfitData.profit)}`}
+            aria-label={`Lucro parcial de hoje: ${formatCurrency(data.todayProfit.profit)}`}
           >
-            {formatCurrency(todayProfitData.profit)}
+            {formatCurrency(data.todayProfit.profit)}
           </span>
         </div>
       </div>

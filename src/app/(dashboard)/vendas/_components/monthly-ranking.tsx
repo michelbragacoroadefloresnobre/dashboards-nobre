@@ -1,7 +1,8 @@
 "use client";
 
 import { useCarousel } from "@/app/(dashboard)/_hooks/use-carousel";
-import { AVATAR_COLORS, monthlyData } from "@/data/dashboard";
+import type { OperationResponse } from "@/app/api/operation/types";
+import { AVATAR_COLORS } from "@/data/dashboard";
 import { useRef } from "react";
 import { useDynamicPerPage } from "../../_hooks/use-dynamic-per-page";
 import { Carousel } from "./carousel";
@@ -16,19 +17,20 @@ function posColor(pos: number) {
 // Row height: py-[9px]*2 + content ~34px + gap ~2px ≈ 54px
 const ROW_HEIGHT = 54;
 
-export function MonthlyRanking() {
+interface MonthlyRankingProps {
+  data: OperationResponse["monthlyRanking"];
+}
+
+export function MonthlyRanking({ data }: MonthlyRankingProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const perPage = useDynamicPerPage(containerRef, ROW_HEIGHT);
 
   const effectivePerPage = perPage ?? 10;
-  const totalPages = Math.ceil(monthlyData.length / effectivePerPage);
+  const totalPages = Math.ceil(data.length / effectivePerPage);
   const carousel = useCarousel(totalPages);
 
   const pages = Array.from({ length: totalPages }, (_, p) => {
-    const slice = monthlyData.slice(
-      p * effectivePerPage,
-      (p + 1) * effectivePerPage,
-    );
+    const slice = data.slice(p * effectivePerPage, (p + 1) * effectivePerPage);
     return (
       <div key={p} className="flex flex-col gap-0.5">
         {slice.map((v) => {

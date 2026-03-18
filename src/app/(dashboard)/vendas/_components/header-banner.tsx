@@ -1,4 +1,12 @@
-export function HeaderBanner() {
+import type { OperationResponse } from "@/app/api/operation/types";
+
+interface HeaderBannerProps {
+  data: OperationResponse["headerBanner"];
+}
+
+export function HeaderBanner({ data }: HeaderBannerProps) {
+  const { highestRevenue, highestOrders, today } = data;
+
   return (
     <div className="col-span-full flex items-center justify-between bg-gradient-to-br from-[#2D6A4F] via-[#1B4332] to-[#0B2920] rounded-2xl px-8 py-5 text-white relative overflow-hidden animate-slide-down">
       {/* Decorative radial */}
@@ -29,9 +37,11 @@ export function HeaderBanner() {
             <div className="text-[11px] uppercase tracking-widest opacity-60 font-medium">
               Maior Faturamento
             </div>
-            <div className="text-lg font-bold tracking-tight">R$ 80.699,33</div>
+            <div className="text-lg font-bold tracking-tight">
+              {highestRevenue.value}
+            </div>
             <div className="text-[11px] opacity-50 mt-px">
-              27/02/2028 · Durai
+              {highestRevenue.date} · {highestRevenue.team}
             </div>
           </div>
         </div>
@@ -43,9 +53,11 @@ export function HeaderBanner() {
             <div className="text-[11px] uppercase tracking-widest opacity-60 font-medium">
               Mais Pedidos
             </div>
-            <div className="text-lg font-bold tracking-tight">174 pedidos</div>
+            <div className="text-lg font-bold tracking-tight">
+              {highestOrders.value} pedidos
+            </div>
             <div className="text-[11px] opacity-50 mt-px">
-              27/02/2028 · Dubai
+              {highestOrders.date} · {highestOrders.team}
             </div>
           </div>
         </div>
@@ -54,7 +66,8 @@ export function HeaderBanner() {
       <div className="z-1 text-right">
         <div className="text-[13px] opacity-60">
           <span className="inline-block size-1.75 bg-[#4ADE80] rounded-full animate-pulse-dot" />
-          &ensp;Ao vivo · 10/03/2028
+          &ensp;Ao vivo · {today.date} ·{" "}
+          <span className="capitalize">{today.team}</span>
         </div>
       </div>
     </div>

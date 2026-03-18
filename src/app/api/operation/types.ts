@@ -64,7 +64,8 @@ export interface OperationResponse {
     initials: string;
     name: string;
     fat: string;
-    orders: string;
+    orders: number;
+    tm: string;
   }>;
   operationKpis: {
     revenue: string;

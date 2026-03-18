@@ -1,6 +1,6 @@
 "use client";
 
-import { weeklyRevenueData } from "@/data/dashboard";
+import type { OperationResponse } from "@/app/api/operation/types";
 import { useEffect, useState } from "react";
 import {
   Area,
@@ -13,12 +13,22 @@ import {
   YAxis,
 } from "recharts";
 
-const BLUE_NEON = "#3B82F6";
-const RED_NEON = "#EF4444";
+const TEAM_COLORS: Record<string, string> = {
+  tulum: "#EF4444",
+  dubai: "#3B82F6",
+};
+const DEFAULT_COLOR = "#3B82F6";
+
+const TEAM_EMOJIS: Record<string, string> = {
+  tulum: "🏁",
+  dubai: "🚀",
+};
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
+
+const TEAMS = ["tulum", "dubai"] as const;
 
 function CustomTooltip({
   active,
@@ -26,74 +36,90 @@ function CustomTooltip({
   label,
 }: {
   active?: boolean;
-  payload?: { value: number; dataKey: string; color: string }[];
+  payload?: { value?: number; color: string; name: string }[];
   label?: string;
 }) {
   if (!active || !payload?.length) return null;
 
+  const entries = payload.filter((e) => e.value != null);
+  if (!entries.length) return null;
+
   return (
     <div className="bg-[#130B29]/95 backdrop-blur-sm rounded-lg border border-white/10 shadow-lg px-3 py-2">
       <p className="text-[11px] font-semibold text-white/50 mb-1">{label}</p>
-      {payload.map((entry) => (
+      {entries.map((entry, i) => (
         <p
-          key={entry.dataKey}
+          key={i}
           className="text-[12px] font-semibold"
           style={{ color: entry.color }}
         >
-          {entry.dataKey === "tulum" ? "🏁 Tulum" : "🚀 Equipe B"}:{" "}
-          {formatCurrency(entry.value)}
+          {TEAM_EMOJIS[entry.name] ?? ""}{" "}
+          {entry.name.charAt(0).toUpperCase() + entry.name.slice(1)}:{" "}
+          {formatCurrency(entry.value!)}
         </p>
       ))}
     </div>
   );
 }
 
-export function WeeklyRevenueChart() {
+interface WeeklyRevenueChartProps {
+  data: OperationResponse["weeklyRevenueChart"];
+}
+
+export function WeeklyRevenueChart({ data }: WeeklyRevenueChartProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     requestAnimationFrame(() => setMounted(true));
   }, []);
 
-  const chartData = weeklyRevenueData.map((d) => ({
-    date: d.date,
-    tulum: d.team === "tulum" ? d.invoice : null,
-    equipeB: d.team === "equipeB" ? d.invoice : null,
-  }));
+  // Build chart data: each date gets a row with tulum/dubai as separate fields
+  const dateMap = new Map<
+    string,
+    { tulum?: number; dubai?: number }
+  >();
+  for (const d of data) {
+    if (!dateMap.has(d.date)) {
+      dateMap.set(d.date, {});
+    }
+    const entry = dateMap.get(d.date)!;
+    if (d.team === "tulum") entry.tulum = d.invoice;
+    if (d.team === "dubai") entry.dubai = d.invoice;
+  }
+  const chartData = Array.from(dateMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, values]) => ({ date, ...values }));
 
-  const todayTeam = weeklyRevenueData[weeklyRevenueData.length - 1]?.team;
-  const todayTeamLastValue = [...weeklyRevenueData]
-    .reverse()
-    .find((d) => d.team === todayTeam)?.invoice ?? null;
-  const refLineColor = todayTeam === "tulum" ? BLUE_NEON : RED_NEON;
+  // Reference line: last entry = today's team
+  const lastEntry = data[data.length - 1];
+  const refValue = lastEntry?.invoice ?? null;
+  const refColor = TEAM_COLORS[lastEntry?.team] ?? DEFAULT_COLOR;
 
   return (
-    // Gradiente de fundo atualizado para tons de roxo bem escuro
     <div className="flex flex-col flex-1 min-h-0 bg-linear-to-br from-[#130B29]/95 via-[#25134A]/90 to-[#130B29]/95 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
       <div className="px-5 pt-4 pb-1">
         <div className="text-xs font-semibold uppercase tracking-[1.2px] text-white/60 flex items-center gap-2">
-          <span className="text-[15px]">📈</span> Faturamento Semanal — Equipes
+          <span className="text-[15px]">📈</span> Faturamento Semanal
         </div>
         <div className="flex items-center gap-4 mt-2">
-          <span className="flex items-center gap-1.5 text-[11px] text-white/50">
-            <span
-              className="w-2.5 h-0.75 rounded-full inline-block"
-              style={{
-                backgroundColor: BLUE_NEON,
-                boxShadow: `0 0 6px ${BLUE_NEON}`,
-              }}
-            />{" "}
-            🏁 Tulum
-          </span>
-          <span className="flex items-center gap-1.5 text-[11px] text-white/50">
-            <span
-              className="w-2.5 h-0.75 rounded-full inline-block"
-              style={{
-                backgroundColor: RED_NEON,
-                boxShadow: `0 0 6px ${RED_NEON}`,
-              }}
-            />{" "}
-            🚀 Equipe B
-          </span>
+          {TEAMS.map((team) => {
+            const color = TEAM_COLORS[team] ?? DEFAULT_COLOR;
+            const emoji = TEAM_EMOJIS[team] ?? "🏁";
+            return (
+              <span
+                key={team}
+                className="flex items-center gap-1.5 text-[11px] text-white/50"
+              >
+                <span
+                  className="w-2.5 h-0.75 rounded-full inline-block"
+                  style={{
+                    backgroundColor: color,
+                    boxShadow: `0 0 6px ${color}`,
+                  }}
+                />{" "}
+                {emoji} {team.charAt(0).toUpperCase() + team.slice(1)}
+              </span>
+            );
+          })}
         </div>
       </div>
       <div className="flex-1 min-h-0 px-2 pb-3">
@@ -101,32 +127,37 @@ export function WeeklyRevenueChart() {
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData}>
               <defs>
-                <filter id="glow-blue">
+                {TEAMS.map((team) => {
+                  const color = TEAM_COLORS[team] ?? DEFAULT_COLOR;
+                  return (
+                    <linearGradient
+                      key={team}
+                      id={`fill-${team}`}
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor={color}
+                        stopOpacity={0.25}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor={color}
+                        stopOpacity={0.02}
+                      />
+                    </linearGradient>
+                  );
+                })}
+                <filter id="glow-main">
                   <feGaussianBlur stdDeviation="3" result="blur" />
                   <feMerge>
                     <feMergeNode in="blur" />
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
-                <filter id="glow-red">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <linearGradient id="fill-blue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={BLUE_NEON} stopOpacity={0.25} />
-                  <stop
-                    offset="100%"
-                    stopColor={BLUE_NEON}
-                    stopOpacity={0.02}
-                  />
-                </linearGradient>
-                <linearGradient id="fill-red" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={RED_NEON} stopOpacity={0.2} />
-                  <stop offset="100%" stopColor={RED_NEON} stopOpacity={0.02} />
-                </linearGradient>
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -147,10 +178,10 @@ export function WeeklyRevenueChart() {
                 tickLine={false}
               />
               <Tooltip content={<CustomTooltip />} />
-              {todayTeamLastValue != null && (
+              {refValue != null && (
                 <ReferenceLine
-                  y={todayTeamLastValue}
-                  stroke={refLineColor}
+                  y={refValue}
+                  stroke={refColor}
                   strokeDasharray="6 4"
                   strokeOpacity={0.35}
                   strokeWidth={1.5}
@@ -159,41 +190,43 @@ export function WeeklyRevenueChart() {
               <Area
                 type="monotone"
                 dataKey="tulum"
+                name="tulum"
                 connectNulls
-                stroke={BLUE_NEON}
+                stroke={TEAM_COLORS.tulum}
                 strokeWidth={3}
-                fill="url(#fill-blue)"
-                filter="url(#glow-blue)"
+                fill="url(#fill-tulum)"
+                filter="url(#glow-main)"
                 dot={{
                   r: 4,
-                  fill: BLUE_NEON,
+                  fill: TEAM_COLORS.tulum,
                   stroke: "rgba(255,255,255,0.3)",
                   strokeWidth: 1.5,
                 }}
                 activeDot={{
                   r: 6,
-                  fill: BLUE_NEON,
+                  fill: TEAM_COLORS.tulum,
                   stroke: "#fff",
                   strokeWidth: 2,
                 }}
               />
               <Area
                 type="monotone"
-                dataKey="equipeB"
+                dataKey="dubai"
+                name="dubai"
                 connectNulls
-                stroke={RED_NEON}
+                stroke={TEAM_COLORS.dubai}
                 strokeWidth={3}
-                fill="url(#fill-red)"
-                filter="url(#glow-red)"
+                fill="url(#fill-dubai)"
+                filter="url(#glow-main)"
                 dot={{
                   r: 4,
-                  fill: RED_NEON,
+                  fill: TEAM_COLORS.dubai,
                   stroke: "rgba(255,255,255,0.3)",
                   strokeWidth: 1.5,
                 }}
                 activeDot={{
                   r: 6,
-                  fill: RED_NEON,
+                  fill: TEAM_COLORS.dubai,
                   stroke: "#fff",
                   strokeWidth: 2,
                 }}

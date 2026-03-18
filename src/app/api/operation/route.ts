@@ -47,13 +47,13 @@ export async function GET() {
       teamOfTodayRes,
     ] = await Promise.all([
       fetchApi<ExternalOrderSummary[]>(
-        `${API_BASE}/order-summaries?start=${startOfMonth.toISO()}&end=${now.toISO()}`,
+        `${API_BASE}/order-summaries?start=${startOfMonth.toISO()}&end=${now.endOf("day").toISO()}`,
       ),
       fetchApi<ExternalOrderSummary[]>(
-        `${API_BASE}/order-summaries?start=${midnightToday.toISO()}&end=${now.toISO()}`,
+        `${API_BASE}/order-summaries?start=${midnightToday.toISO()}&end=${now.endOf("day").toISO()}`,
       ),
       fetchApi<ExternalOrderSummary[]>(
-        `${API_BASE}/order-summaries?start=${midnightYesterday.toISO()}&end=${midnightToday.toISO()}`,
+        `${API_BASE}/order-summaries?start=${midnightYesterday.toISO()}&end=${midnightYesterday.endOf("day").toISO()}`,
       ),
       fetchApi<ExternalDailySummary[]>(`${API_BASE}/daily-summaries`),
       fetchApi<ExternalDailySummary[]>(
@@ -63,26 +63,22 @@ export async function GET() {
     ]);
 
     const teamOfToday = teamOfTodayRes.team;
-    const teamParam = teamOfToday !== "none" ? `&team=${teamOfToday}` : "";
+    // const teamParam = teamOfToday !== "none" ? `&team=${teamOfToday}` : "";
 
     // conversion-tax depends on teamOfToday, so it runs after
     const [conversionTax, yesterdayConversionTax] = await Promise.all([
       fetchApi<ExternalConversionTax>(
-        `${API_BASE}/conversion-tax?start=${midnightToday.toISO()}&end=${now.toISO()}${teamParam}`,
+        `${API_BASE}/conversion-tax?start=${midnightToday.toISO()}&end=${now.toISO()}`,
       ),
       fetchApi<ExternalConversionTax>(
-        `${API_BASE}/conversion-tax?start=${midnightYesterday.toISO()}&end=${midnightToday.toISO()}${teamParam}`,
+        `${API_BASE}/conversion-tax?start=${midnightYesterday.toISO()}&end=${midnightToday.toISO()}`,
       ),
     ]);
 
     // -- Processing -----------------------------------------------------------
 
     // 1. Header Banner
-    const headerBanner = buildHeaderBanner(
-      allDailySummaries,
-      now,
-      teamOfToday,
-    );
+    const headerBanner = buildHeaderBanner(allDailySummaries, now, teamOfToday);
 
     // 2. Monthly Ranking
     const monthlyRanking = buildMonthlyRanking(filterNonCancelled(monthOrders));
@@ -99,18 +95,15 @@ export async function GET() {
       yesterdayConversionTax.conversionTax,
     );
 
-    // 5. Sales Race
-    const salesRace = buildSalesRace(
-      recentDailySummaries,
-      now,
-      teamOfToday,
+    // 5. Sales Race (daily summaries from the 1st of the current month)
+    const monthStartStr = startOfMonth.toFormat("yyyy-MM-dd");
+    const monthDailySummaries = allDailySummaries.filter(
+      (ds) => ds.date >= monthStartStr,
     );
+    const salesRace = buildSalesRace(monthDailySummaries, now, teamOfToday);
 
     // 6. Weekly Revenue Chart
-    const weeklyRevenueChart = buildWeeklyRevenueChart(
-      recentDailySummaries,
-      teamOfToday,
-    );
+    const weeklyRevenueChart = buildWeeklyRevenueChart(recentDailySummaries);
 
     // 7. Conquests
     const conquests = buildConquests(filterNonCancelled(monthOrders));
@@ -125,9 +118,14 @@ export async function GET() {
       conquests,
     };
 
-    return Response.json({ data: payload }, {
-      headers: { "Cache-Control": "no-store, max-age=0" },
-    });
+    // console.log(payload);
+
+    return Response.json(
+      { data: payload },
+      {
+        headers: { "Cache-Control": "no-store, max-age=0" },
+      },
+    );
   } catch (error) {
     console.error("[/api/operation] Error:", error);
     return Response.json(
@@ -153,7 +151,7 @@ function buildHeaderBanner(
   let maxOrders = 0;
 
   for (const ds of dailySummaries) {
-    const invoice = parseFloat(ds.invoice);
+    const invoice = Number(ds.invoice);
     if (invoice > maxInvoice) {
       maxInvoice = invoice;
       highestRevenue = {
@@ -182,8 +180,9 @@ function buildHeaderBanner(
   };
 }
 
-function sumTeamOrders(orders: ExternalOrderSummary[], team: string) {
-  const filtered = filterNonCancelled(orders).filter((o) => o.team === team);
+function sumTeamOrders(orders: ExternalOrderSummary[], team: string | null) {
+  let filtered = filterNonCancelled(orders);
+  if (team) filtered = filtered.filter((o) => o.team === team);
   let amount = 0;
   let cost = 0;
   for (const order of filtered) {
@@ -201,21 +200,18 @@ function buildOperationKpis(
   yesterdayConversionTax: number,
 ): OperationResponse["operationKpis"] {
   const today = sumTeamOrders(todayOrders, teamOfToday);
-  const yesterday = sumTeamOrders(yesterdayOrders, teamOfToday);
+  const yesterday = sumTeamOrders(yesterdayOrders, null);
 
   const repasse = today.amount > 0 ? today.cost / today.amount : 0;
   const yesterdayRepasse =
     yesterday.amount > 0 ? yesterday.cost / yesterday.amount : 0;
 
-  // Changes vs yesterday (percentage points for rates, % change for revenue)
   const revenueChange =
     yesterday.amount > 0
       ? (today.amount - yesterday.amount) / yesterday.amount
       : null;
   const conversionTaxChange =
-    yesterdayConversionTax > 0
-      ? conversionTax - yesterdayConversionTax
-      : null;
+    yesterdayConversionTax > 0 ? conversionTax - yesterdayConversionTax : null;
   const repasseChange =
     yesterdayRepasse > 0 ? repasse - yesterdayRepasse : null;
 
@@ -238,7 +234,11 @@ function buildSalesRace(
 
   const teamAccum = new Map<
     string,
-    { invoiceBeforeToday: number; costBeforeToday: number; daysBeforeToday: number }
+    {
+      invoiceBeforeToday: number;
+      costBeforeToday: number;
+      daysBeforeToday: number;
+    }
   >();
 
   let todayProfit = 0;
@@ -255,8 +255,8 @@ function buildSalesRace(
       if (team === "none") continue;
 
       const entry = teamAccum.get(team);
-      const invoice = parseFloat(ds.invoice);
-      const cost = parseFloat(ds.cost);
+      const invoice = Number(ds.invoice);
+      const cost = Number(ds.cost);
 
       if (entry) {
         entry.invoiceBeforeToday += invoice;
@@ -295,10 +295,8 @@ function buildSalesRace(
 
 function buildWeeklyRevenueChart(
   recentDailySummaries: ExternalDailySummary[],
-  teamOfToday: string,
 ): OperationResponse["weeklyRevenueChart"] {
   return recentDailySummaries
-    .filter((ds) => ds.team === teamOfToday)
     .sort((a, b) => a.date.localeCompare(b.date))
     .map((ds) => ({
       date: formatDateShort(ds.date),
@@ -315,8 +313,10 @@ function buildConquests(
     .sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount))
     .slice(0, 9)
     .map((o) => ({
-      name: o.product?.name ?? "Produto",
-      price: formatCurrency(parseFloat(o.amount)),
+      name: (o.product?.name ?? "Produto")
+        .replace(/^Coroa de Flores/i, "")
+        .trim(),
+      price: formatCurrency(parseFloat(o.amount), true),
       imageUrl: o.product?.imageUrl,
       sellerName: o.seller?.name,
     }));
