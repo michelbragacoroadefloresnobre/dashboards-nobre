@@ -19,9 +19,10 @@ const ROW_HEIGHT = 54;
 
 interface MonthlyRankingProps {
   data: OperationResponse["monthlyRanking"];
+  referenceMonth: string;
 }
 
-export function MonthlyRanking({ data }: MonthlyRankingProps) {
+export function MonthlyRanking({ data, referenceMonth }: MonthlyRankingProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const perPage = useDynamicPerPage(containerRef, ROW_HEIGHT);
 
@@ -77,7 +78,7 @@ export function MonthlyRanking({ data }: MonthlyRankingProps) {
           <span className="text-[15px]">📊</span> Desempenho Mensal
         </div>
         <div className="text-[11px] px-2.5 py-[3px] rounded-full font-medium bg-accent-green-light text-accent-green">
-          Março 2028
+          {referenceMonth}
         </div>
       </div>
       <div className="px-[22px] pt-4 pb-[22px] flex-1 flex flex-col min-h-0">

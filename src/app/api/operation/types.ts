@@ -46,6 +46,7 @@ export interface ExternalConversionTax {
 // ---------------------------------------------------------------------------
 
 export interface OperationResponse {
+  referenceMonth: string; // e.g. "Março 2026"
   headerBanner: {
     highestRevenue: { value: string; date: string; team: string };
     highestOrders: { value: number; date: string; team: string };

@@ -38,7 +38,7 @@ export function SalesDashboard() {
 
       {/* Col Left */}
       <div className="flex flex-col gap-5 min-h-0 animate-fade-up-1">
-        <MonthlyRanking data={data.monthlyRanking} />
+        <MonthlyRanking data={data.monthlyRanking} referenceMonth={data.referenceMonth} />
       </div>
 
       {/* Col Center */}
