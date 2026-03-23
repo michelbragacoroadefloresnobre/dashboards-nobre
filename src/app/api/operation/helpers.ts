@@ -142,7 +142,7 @@ export function buildDailyRanking(
   for (const order of orders) {
     if (!order.seller) continue;
     if (order.seller.permission !== "comercial") continue;
-    if (order.seller.team !== teamOfToday) continue;
+    if (order.team !== teamOfToday) continue;
     const key = order.seller.id;
     const entry = sellerMap.get(key);
     const amount = parseFloat(order.amount);

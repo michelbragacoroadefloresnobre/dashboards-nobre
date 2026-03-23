@@ -73,7 +73,7 @@ export async function GET() {
       ),
     ]);
 
-    // Compute global conversion tax for KPIs (uses form.team, not seller.team)
+    // Compute global conversion tax for KPIs
     function computeConversionTax(
       forms: ExternalForm[],
       team?: string,
