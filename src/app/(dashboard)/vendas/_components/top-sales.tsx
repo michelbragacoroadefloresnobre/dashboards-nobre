@@ -29,7 +29,7 @@ export function TopSales({ data }: TopSalesProps) {
               }`}
             >
               {/* Área da Imagem do Vendedor */}
-              <div className="w-20 h-20 rounded-full mx-auto mb-2.5 bg-gradient-to-br from-[#e8e8e8] to-[#d4d4d4] flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-18 h-18 rounded-full mx-auto mb-2.5 bg-linear-to-br from-[#e8e8e8] to-[#d4d4d4] flex items-center justify-center overflow-hidden shrink-0">
                 {c.locked ? (
                   <span className="text-3xl opacity-40">🔒</span>
                 ) : c.sellerImageUrl ? (
@@ -39,7 +39,7 @@ export function TopSales({ data }: TopSalesProps) {
                     className="object-cover w-full h-full"
                   />
                 ) : (
-                  <span className="text-[30px]">🌸</span>
+                  <img src="/logo.png" alt="FloraHub" className="w-7.5 h-7.5" />
                 )}
               </div>
 

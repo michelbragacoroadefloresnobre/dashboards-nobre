@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { OperationResponse } from "@/app/api/operation/types";
 
 interface HeaderBannerProps {
@@ -14,9 +15,13 @@ export function HeaderBanner({ data }: HeaderBannerProps) {
 
       {/* Left */}
       <div className="flex items-center gap-5 z-[1]">
-        <div className="w-11 h-11 bg-white/15 rounded-xl flex items-center justify-center text-[22px] backdrop-blur-[10px] border border-white/10">
-          🌸
-        </div>
+        <Image
+          src="/logo.png"
+          alt="FloraHub"
+          width={44}
+          height={44}
+          className="rounded-xl"
+        />
         <div>
           <div className="font-display text-[22px] font-bold tracking-tight">
             Painel de Vendas

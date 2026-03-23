@@ -1,12 +1,12 @@
 "use client";
 
 import { useDashboardData } from "@/app/(dashboard)/vendas/_hooks/use-dashboard-data";
-import { TopSales } from "./top-sales";
 import { DailyRanking } from "./daily-ranking";
 import { HeaderBanner } from "./header-banner";
 import { MonthlyRanking } from "./monthly-ranking";
 import { OperationKPIs } from "./operation-kpis";
 import { SalesProgress } from "./sales-progress";
+import { TopSales } from "./top-sales";
 import { WeeklyRevenueChart } from "./weekly-revenue-chart";
 
 export function SalesDashboard() {
@@ -33,7 +33,7 @@ export function SalesDashboard() {
   }
 
   return (
-    <div className="grid grid-cols-[0.90fr_1.2fr_0.90fr] grid-rows-[auto_1fr] gap-5 p-6 h-full max-w-480 mx-auto">
+    <div className="grid grid-cols-[0.90fr_1.2fr_0.90fr] grid-rows-[auto_1fr] gap-5 p-6 h-full max-w-512 mx-auto">
       <HeaderBanner data={data.headerBanner} />
 
       {/* Col Left */}

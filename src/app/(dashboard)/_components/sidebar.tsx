@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -25,9 +26,13 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-6 pt-6 pb-5 border-b border-border-light">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-green to-[#1B4332] flex items-center justify-center text-lg text-white">
-            🌸
-          </div>
+          <Image
+            src="/logo.png"
+            alt="FloraHub"
+            width={40}
+            height={40}
+            className="rounded-xl"
+          />
           <div>
             <div className="font-display text-[17px] font-bold text-text-primary tracking-tight leading-tight">
               FloraHub

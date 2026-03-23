@@ -15,7 +15,7 @@ export function OperationKPIs({ data }: OperationKPIsProps) {
           <span className="text-[15px]">⚡</span> Operação
         </div>
       </div>
-      <div className="px-5 pt-3 pb-4">
+      <div className="px-5 pt-4 pb-5">
         <div className="grid grid-cols-3 gap-2.5">
           <KpiCard
             label="Faturamento"
@@ -69,7 +69,7 @@ function KpiCard({
   const changeText = change !== null ? formatChange(change) : null;
 
   return (
-    <div className="bg-bg-card-alt rounded-[10px] p-3.5 border border-border-light">
+    <div className="bg-bg-card-alt rounded-[10px] p-4 border border-border-light">
       <div className="text-[11px] uppercase tracking-widest text-text-muted font-semibold mb-1.5">
         {label}
       </div>
