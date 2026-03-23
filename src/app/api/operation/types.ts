@@ -5,7 +5,7 @@
 export interface ExternalOrderSummary {
   id: string;
   amount: string; // decimal string e.g. "150.00"
-  cost: string;
+  cost: string | null;
   orderId: string;
   team: "tulum" | "dubai" | "none";
   status: "PRODUCING" | "FINISHED" | "CANCELLED";
@@ -20,6 +20,8 @@ export interface ExternalOrderSummary {
     name: string;
     email: string;
     team: "tulum" | "dubai" | "none";
+    shift: "MORNING" | "NIGHT";
+    imageUrl: string | null;
     permission: "comercial" | "supervisor";
     createdAt: string;
   };
@@ -28,7 +30,7 @@ export interface ExternalOrderSummary {
 export interface ExternalDailySummary {
   date: string; // "YYYY-MM-DD"
   invoice: string; // decimal string
-  cost: string;
+  cost: string | null;
   orderTotal: number;
   team: "tulum" | "dubai" | "none";
 }
@@ -72,6 +74,7 @@ export interface OperationResponse {
     pos: number;
     initials: string;
     name: string;
+    imageUrl: string | null;
     orders: number;
     conversion: string | null;
     tm: string;
@@ -80,6 +83,7 @@ export interface OperationResponse {
     pos: number;
     initials: string;
     name: string;
+    imageUrl: string | null;
     orders: number;
     conversion: string | null;
     tm: string;
@@ -107,5 +111,6 @@ export interface OperationResponse {
     price: string;
     imageUrl?: string;
     sellerName?: string;
+    sellerImageUrl?: string | null;
   }>;
 }

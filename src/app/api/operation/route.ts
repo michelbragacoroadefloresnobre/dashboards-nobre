@@ -226,17 +226,20 @@ function buildOperationKpis(
   );
 
   const todayInvoice = todaySummary ? parseFloat(todaySummary.invoice) : 0;
-  const todayCost = todaySummary ? parseFloat(todaySummary.cost) : 0;
+  const todayCost =
+    todaySummary?.cost != null ? parseFloat(todaySummary.cost) : null;
   const yesterdayInvoice = yesterdaySummary
     ? parseFloat(yesterdaySummary.invoice)
     : 0;
-  const yesterdayCost = yesterdaySummary
-    ? parseFloat(yesterdaySummary.cost)
-    : 0;
+  const yesterdayCost =
+    yesterdaySummary?.cost != null ? parseFloat(yesterdaySummary.cost) : null;
 
-  const repasse = todayInvoice > 0 ? todayCost / todayInvoice : 0;
+  const repasse =
+    todayInvoice > 0 && todayCost != null ? todayCost / todayInvoice : 0;
   const yesterdayRepasse =
-    yesterdayInvoice > 0 ? yesterdayCost / yesterdayInvoice : 0;
+    yesterdayInvoice > 0 && yesterdayCost != null
+      ? yesterdayCost / yesterdayInvoice
+      : 0;
 
   const revenueChange =
     yesterdayInvoice > 0
@@ -276,6 +279,7 @@ function buildSalesRace(
 
     const team = order.team;
     if (team === "none") continue;
+    if (order.cost == null) continue;
 
     const profit = parseFloat(order.amount) - parseFloat(order.cost);
     teamProfit.set(team, (teamProfit.get(team) ?? 0) + profit);
@@ -298,7 +302,7 @@ function buildSalesRace(
   const todaySummary = monthDailySummaries.find(
     (ds) => ds.date === todayStr && ds.team === teamOfToday,
   );
-  if (todaySummary) {
+  if (todaySummary && todaySummary.cost != null) {
     todayProfit =
       parseFloat(todaySummary.invoice) - parseFloat(todaySummary.cost);
   }
@@ -350,5 +354,6 @@ function buildConquests(
       price: formatCurrency(parseFloat(o.amount), true),
       imageUrl: o.product?.imageUrl,
       sellerName: o.seller?.name,
+      sellerImageUrl: o.seller?.imageUrl ?? null,
     }));
 }

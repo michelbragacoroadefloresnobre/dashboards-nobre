@@ -28,14 +28,14 @@ export function Conquests({ data }: ConquestsProps) {
               c.locked ? "bg-bg-card-alt/60 opacity-50" : "bg-bg-card-alt"
             }`}
           >
-            {/* Área da Imagem do Produto */}
-            <div className="w-20 h-20 rounded-xl mx-auto mb-2.5 bg-gradient-to-br from-[#e8e8e8] to-[#d4d4d4] flex items-center justify-center overflow-hidden shrink-0">
+            {/* Área da Imagem do Vendedor */}
+            <div className="w-20 h-20 rounded-full mx-auto mb-2.5 bg-gradient-to-br from-[#e8e8e8] to-[#d4d4d4] flex items-center justify-center overflow-hidden shrink-0">
               {c.locked ? (
                 <span className="text-3xl opacity-40">🔒</span>
-              ) : c.imageUrl ? (
+              ) : c.sellerImageUrl ? (
                 <img
-                  src={c.imageUrl}
-                  alt={c.name}
+                  src={c.sellerImageUrl}
+                  alt={c.sellerName ?? c.name}
                   className="object-cover w-full h-full"
                 />
               ) : (
@@ -86,6 +86,7 @@ interface Slot {
   price: string;
   imageUrl?: string;
   sellerName?: string;
+  sellerImageUrl?: string | null;
   locked: boolean;
 }
 

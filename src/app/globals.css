@@ -35,10 +35,10 @@
   --color-border: #e8e6e1;
   --color-border-light: #f0eeea;
 
-  --font-display: "Playfair Display", serif;
-  --font-body: "DM Sans", sans-serif;
-  --font-family-body: "DM Sans", sans-serif;
-  --font-family-display: "Playfair Display", serif;
+  --font-display: "Inter", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-family-body: "Inter", sans-serif;
+  --font-family-display: "Inter", sans-serif;
 }
 
 * {

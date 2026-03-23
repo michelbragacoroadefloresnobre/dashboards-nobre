@@ -49,7 +49,7 @@ function formatPercent(value: number): string {
 
 function formatPP(value: number): string {
   const pp = (value * 100).toFixed(1);
-  return `${value >= 0 ? "+" : ""}${pp} pp`;
+  return `${value >= 0 ? "+" : ""}${pp} %`;
 }
 
 function KpiCard({

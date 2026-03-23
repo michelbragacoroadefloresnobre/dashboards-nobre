@@ -75,7 +75,7 @@ export function buildMonthlyRanking(
   const conversionMap = buildConversionMap(forms);
   const sellerMap = new Map<
     string,
-    { name: string; fat: number; orders: number }
+    { name: string; imageUrl: string | null; fat: number; orders: number }
   >();
 
   for (const order of orders) {
@@ -88,9 +88,13 @@ export function buildMonthlyRanking(
     if (entry) {
       entry.fat += amount;
       entry.orders += 1;
+      if (!entry.imageUrl && order.seller.imageUrl) {
+        entry.imageUrl = order.seller.imageUrl;
+      }
     } else {
       sellerMap.set(key, {
         name: order.seller.name,
+        imageUrl: order.seller.imageUrl ?? null,
         fat: amount,
         orders: 1,
       });
@@ -114,6 +118,7 @@ export function buildMonthlyRanking(
       pos: i + 1,
       initials: getInitials(s.name),
       name: s.name,
+      imageUrl: s.imageUrl,
       orders: s.orders,
       conversion: conv
         ? `${Math.round((conv.converted / conv.total) * 100)}%`
@@ -131,7 +136,7 @@ export function buildDailyRanking(
   const conversionMap = buildConversionMap(forms);
   const sellerMap = new Map<
     string,
-    { name: string; fat: number; orders: number }
+    { name: string; imageUrl: string | null; fat: number; orders: number }
   >();
 
   for (const order of orders) {
@@ -145,9 +150,13 @@ export function buildDailyRanking(
     if (entry) {
       entry.fat += amount;
       entry.orders += 1;
+      if (!entry.imageUrl && order.seller.imageUrl) {
+        entry.imageUrl = order.seller.imageUrl;
+      }
     } else {
       sellerMap.set(key, {
         name: order.seller.name,
+        imageUrl: order.seller.imageUrl ?? null,
         fat: amount,
         orders: 1,
       });
@@ -171,6 +180,7 @@ export function buildDailyRanking(
       pos: i + 1,
       initials: getInitials(s.name),
       name: s.name,
+      imageUrl: s.imageUrl,
       orders: s.orders,
       conversion: conv
         ? `${Math.round((conv.converted / conv.total) * 100)}%`

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useCarousel } from "@/app/(dashboard)/_hooks/use-carousel";
@@ -46,14 +47,22 @@ export function MonthlyRanking({ data, referenceMonth }: MonthlyRankingProps) {
               >
                 {v.pos}
               </div>
-              <div
-                className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center text-[13px] font-semibold text-white"
-                style={{
-                  background: `linear-gradient(135deg, ${c[0]}, ${c[1]})`,
-                }}
-              >
-                {v.initials}
-              </div>
+              {v.imageUrl ? (
+                <img
+                  src={v.imageUrl}
+                  alt={v.name}
+                  className="w-[34px] h-[34px] rounded-full object-cover"
+                />
+              ) : (
+                <div
+                  className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-[13px] font-semibold text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${c[0]}, ${c[1]})`,
+                  }}
+                >
+                  {v.initials}
+                </div>
+              )}
               <div className="text-[13.5px] font-medium truncate">{v.name}</div>
               <div className="text-[13.5px] font-semibold text-center min-w-[32px]">
                 {v.orders}
