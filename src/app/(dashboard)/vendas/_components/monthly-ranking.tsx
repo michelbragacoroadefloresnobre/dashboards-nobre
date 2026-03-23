@@ -55,11 +55,11 @@ export function MonthlyRanking({ data, referenceMonth }: MonthlyRankingProps) {
                 {v.initials}
               </div>
               <div className="text-[13.5px] font-medium truncate">{v.name}</div>
-              <div className="text-[13.5px] font-semibold text-right whitespace-nowrap">
-                {v.fat}
-              </div>
-              <div className="text-xs text-text-secondary text-center min-w-[32px]">
+              <div className="text-[13.5px] font-semibold text-center min-w-[32px]">
                 {v.orders}
+              </div>
+              <div className="text-xs text-text-secondary text-center min-w-[52px]">
+                {v.conversion ?? "-"}
               </div>
               <div className="text-xs text-text-muted text-right min-w-[70px]">
                 {v.tm}
@@ -91,11 +91,11 @@ export function MonthlyRanking({ data, referenceMonth }: MonthlyRankingProps) {
           <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">
             Vendedor
           </span>
-          <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold text-right">
-            Faturamento
+          <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold text-center">
+            Volume
           </span>
           <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold text-center">
-            Pedidos
+            Conversão
           </span>
           <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold text-right">
             Ticket

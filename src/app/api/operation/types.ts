@@ -41,6 +41,22 @@ export interface ExternalConversionTax {
   conversionTax: number; // 0–1
 }
 
+export interface ExternalForm {
+  id: string;
+  status: "NOT_CONVERTED" | "CANCELLED" | "CONVERTED";
+  team: "tulum" | "dubai" | "none" | null;
+  seller?: {
+    id: string;
+    name: string;
+    email: string;
+    team: "tulum" | "dubai" | "none";
+    shift: "MORNING" | "NIGHT";
+    imageUrl: string | null;
+    permission: "comercial" | "supervisor";
+    createdAt: string;
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Output payload (what GET /api/operation returns)
 // ---------------------------------------------------------------------------
@@ -56,16 +72,16 @@ export interface OperationResponse {
     pos: number;
     initials: string;
     name: string;
-    fat: string;
     orders: number;
+    conversion: string | null;
     tm: string;
   }>;
   dailyRanking: Array<{
     pos: number;
     initials: string;
     name: string;
-    fat: string;
     orders: number;
+    conversion: string | null;
     tm: string;
   }>;
   operationKpis: {

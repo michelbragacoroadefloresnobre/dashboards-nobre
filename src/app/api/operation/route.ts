@@ -8,8 +8,8 @@ import {
   formatDateShort,
 } from "./helpers";
 import type {
-  ExternalConversionTax,
   ExternalDailySummary,
+  ExternalForm,
   ExternalOrderSummary,
   ExternalTeamOfToday,
   OperationResponse,
@@ -59,17 +59,33 @@ export async function GET() {
     ]);
 
     const teamOfToday = teamOfTodayRes.team;
-    // const teamParam = teamOfToday !== "none" ? `&team=${teamOfToday}` : "";
 
-    // conversion-tax depends on teamOfToday, so it runs after
-    const [conversionTax, yesterdayConversionTax] = await Promise.all([
-      fetchApi<ExternalConversionTax>(
-        `${API_BASE}/conversion-tax?start=${midnightToday.toISO()}&end=${now.toISO()}`,
+    // Fetch forms for conversion rate calculation
+    const [monthForms, todayForms, yesterdayForms] = await Promise.all([
+      fetchApi<ExternalForm[]>(
+        `${API_BASE}/forms?start=${startOfMonth.toISO()}&end=${now.endOf("day").toISO()}`,
       ),
-      fetchApi<ExternalConversionTax>(
-        `${API_BASE}/conversion-tax?start=${midnightYesterday.toISO()}&end=${midnightToday.toISO()}`,
+      fetchApi<ExternalForm[]>(
+        `${API_BASE}/forms?start=${midnightToday.toISO()}&end=${now.endOf("day").toISO()}`,
+      ),
+      fetchApi<ExternalForm[]>(
+        `${API_BASE}/forms?start=${midnightYesterday.toISO()}&end=${midnightToday.toISO()}`,
       ),
     ]);
+
+    // Compute global conversion tax for KPIs (uses form.team, not seller.team)
+    function computeConversionTax(
+      forms: ExternalForm[],
+      team?: string,
+    ): number {
+      const filtered = team ? forms.filter((f) => f.team === team) : forms;
+      if (filtered.length === 0) return 0;
+      const converted = filtered.filter((f) => f.status === "CONVERTED").length;
+      return converted / filtered.length;
+    }
+
+    const conversionTax = computeConversionTax(todayForms, teamOfToday);
+    const yesterdayConversionTax = computeConversionTax(yesterdayForms);
 
     // -- Processing -----------------------------------------------------------
 
@@ -77,18 +93,25 @@ export async function GET() {
     const headerBanner = buildHeaderBanner(allDailySummaries, now, teamOfToday);
 
     // 2. Monthly Ranking
-    const monthlyRanking = buildMonthlyRanking(filterNonCancelled(monthOrders));
+    const monthlyRanking = buildMonthlyRanking(
+      filterNonCancelled(monthOrders),
+      monthForms,
+    );
 
-    // 3. Daily Ranking
-    const dailyRanking = buildDailyRanking(filterNonCancelled(todayOrders));
+    // 3. Daily Ranking (filtered by team-of-today)
+    const dailyRanking = buildDailyRanking(
+      filterNonCancelled(todayOrders),
+      todayForms,
+      teamOfToday,
+    );
 
     // 4. Operation KPIs (with yesterday comparison)
     const operationKpis = buildOperationKpis(
       allDailySummaries,
       now,
       teamOfToday,
-      conversionTax.conversionTax,
-      yesterdayConversionTax.conversionTax,
+      conversionTax,
+      yesterdayConversionTax,
     );
 
     // 5. Sales Race (daily summaries from the 1st of the current month)
@@ -124,8 +147,6 @@ export async function GET() {
       weeklyRevenueChart,
       conquests,
     };
-
-    // console.log(payload);
 
     return Response.json(
       { data: payload },
@@ -278,7 +299,8 @@ function buildSalesRace(
     (ds) => ds.date === todayStr && ds.team === teamOfToday,
   );
   if (todaySummary) {
-    todayProfit = parseFloat(todaySummary.invoice) - parseFloat(todaySummary.cost);
+    todayProfit =
+      parseFloat(todaySummary.invoice) - parseFloat(todaySummary.cost);
   }
 
   // 4. Build average profit per team

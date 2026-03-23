@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import type { ExternalOrderSummary } from "./types";
+import type { ExternalForm, ExternalOrderSummary } from "./types";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -46,52 +46,33 @@ export function filterNonCancelled(
   return orders.filter((o) => o.status !== "CANCELLED");
 }
 
-export function buildMonthlyRanking(orders: ExternalOrderSummary[]) {
-  const sellerMap = new Map<
-    string,
-    { name: string; fat: number; orders: number }
-  >();
-
-  for (const order of orders) {
-    if (!order.seller) continue;
-    const key = order.seller.id;
-    const entry = sellerMap.get(key);
-    const amount = parseFloat(order.amount);
-
+function buildConversionMap(
+  forms: ExternalForm[],
+): Map<string, { converted: number; total: number }> {
+  const map = new Map<string, { converted: number; total: number }>();
+  for (const form of forms) {
+    if (!form.seller) continue;
+    if (form.seller.permission !== "comercial") continue;
+    const key = form.seller.id;
+    const entry = map.get(key);
     if (entry) {
-      entry.fat += amount;
-      entry.orders += 1;
+      entry.total += 1;
+      if (form.status === "CONVERTED") entry.converted += 1;
     } else {
-      sellerMap.set(key, {
-        name: order.seller.name,
-        fat: amount,
-        orders: 1,
+      map.set(key, {
+        converted: form.status === "CONVERTED" ? 1 : 0,
+        total: 1,
       });
     }
   }
-
-  const sellers = Array.from(sellerMap.values()).map((s) => ({
-    ...s,
-    tm: s.orders > 0 ? s.fat / s.orders : 0,
-  }));
-
-  sellers.sort((a, b) => {
-    if (b.fat !== a.fat) return b.fat - a.fat;
-    if (b.tm !== a.tm) return b.tm - a.tm;
-    return b.orders - a.orders;
-  });
-
-  return sellers.map((s, i) => ({
-    pos: i + 1,
-    initials: getInitials(s.name),
-    name: s.name,
-    fat: formatCurrency(s.fat),
-    orders: s.orders,
-    tm: formatCurrency(s.tm, true),
-  }));
+  return map;
 }
 
-export function buildDailyRanking(orders: ExternalOrderSummary[]) {
+export function buildMonthlyRanking(
+  orders: ExternalOrderSummary[],
+  forms: ExternalForm[],
+) {
+  const conversionMap = buildConversionMap(forms);
   const sellerMap = new Map<
     string,
     { name: string; fat: number; orders: number }
@@ -99,6 +80,7 @@ export function buildDailyRanking(orders: ExternalOrderSummary[]) {
 
   for (const order of orders) {
     if (!order.seller) continue;
+    if (order.seller.permission !== "comercial") continue;
     const key = order.seller.id;
     const entry = sellerMap.get(key);
     const amount = parseFloat(order.amount);
@@ -115,23 +97,85 @@ export function buildDailyRanking(orders: ExternalOrderSummary[]) {
     }
   }
 
-  const sellers = Array.from(sellerMap.values()).map((s) => ({
+  const sellers = Array.from(sellerMap, ([id, s]) => ({
+    id,
     ...s,
     tm: s.orders > 0 ? s.fat / s.orders : 0,
   }));
 
   sellers.sort((a, b) => {
-    if (b.fat !== a.fat) return b.fat - a.fat;
-    if (b.tm !== a.tm) return b.tm - a.tm;
-    return b.orders - a.orders;
+    if (b.orders !== a.orders) return b.orders - a.orders;
+    return b.tm - a.tm;
   });
 
-  return sellers.map((s, i) => ({
-    pos: i + 1,
-    initials: getInitials(s.name),
-    name: s.name,
-    fat: formatCurrency(s.fat),
-    orders: s.orders,
-    tm: formatCurrency(s.tm, true),
+  return sellers.map((s, i) => {
+    const conv = conversionMap.get(s.id);
+    return {
+      pos: i + 1,
+      initials: getInitials(s.name),
+      name: s.name,
+      orders: s.orders,
+      conversion: conv
+        ? `${Math.round((conv.converted / conv.total) * 100)}%`
+        : null,
+      tm: formatCurrency(s.tm, true),
+    };
+  });
+}
+
+export function buildDailyRanking(
+  orders: ExternalOrderSummary[],
+  forms: ExternalForm[],
+  teamOfToday: string,
+) {
+  const conversionMap = buildConversionMap(forms);
+  const sellerMap = new Map<
+    string,
+    { name: string; fat: number; orders: number }
+  >();
+
+  for (const order of orders) {
+    if (!order.seller) continue;
+    if (order.seller.permission !== "comercial") continue;
+    if (order.seller.team !== teamOfToday) continue;
+    const key = order.seller.id;
+    const entry = sellerMap.get(key);
+    const amount = parseFloat(order.amount);
+
+    if (entry) {
+      entry.fat += amount;
+      entry.orders += 1;
+    } else {
+      sellerMap.set(key, {
+        name: order.seller.name,
+        fat: amount,
+        orders: 1,
+      });
+    }
+  }
+
+  const sellers = Array.from(sellerMap, ([id, s]) => ({
+    id,
+    ...s,
+    tm: s.orders > 0 ? s.fat / s.orders : 0,
   }));
+
+  sellers.sort((a, b) => {
+    if (b.orders !== a.orders) return b.orders - a.orders;
+    return b.tm - a.tm;
+  });
+
+  return sellers.map((s, i) => {
+    const conv = conversionMap.get(s.id);
+    return {
+      pos: i + 1,
+      initials: getInitials(s.name),
+      name: s.name,
+      orders: s.orders,
+      conversion: conv
+        ? `${Math.round((conv.converted / conv.total) * 100)}%`
+        : null,
+      tm: formatCurrency(s.tm, true),
+    };
+  });
 }

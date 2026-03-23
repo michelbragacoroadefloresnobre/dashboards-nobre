@@ -31,7 +31,7 @@ Resumos individuais de cada pedido. Cada pedido gera um `OrderSummary` com valor
       {
         "id": "uuid",
         "amount": "150.00",
-        "cost": "80.00",
+        "cost": "80.00" | null,
         "orderId": "uuid",
         "team": "tulum" | "dubai" | "none",
         "status": "PRODUCING" | "FINISHED" | "CANCELLED",
@@ -46,6 +46,8 @@ Resumos individuais de cada pedido. Cada pedido gera um `OrderSummary` com valor
           "name": "Nome do Vendedor",
           "email": "email@exemplo.com",
           "team": "tulum" | "dubai" | "none",
+          "shift": "MORNING" | "NIGHT",
+          "imageUrl": "https://..." | null,
           "permission": "comercial" | "supervisor",
           "createdAt": "2026-01-01T00:00:00.000Z"
         } | undefined
@@ -126,33 +128,46 @@ Nenhum.
 
 ---
 
-## 4. GET `/api/v1/dashboard/operation/conversion-tax`
+## 4. GET `/api/v1/dashboard/operation/forms`
 
-Taxa de conversão dos pedidos (OrderRequest). Calcula a proporção de requests com status `CONVERTED` em relação ao total no período.
+Lista todos os formulários (OrderRequest) no período, com o vendedor associado.
 
 ### Query Params
 
-| Param   | Tipo               | Obrigatório | Descrição                                                                       |
-| ------- | ------------------ | ----------- | ------------------------------------------------------------------------------- |
-| `start` | string             | Não         | Data/hora início do filtro (`CreatedAt >= start`). Formato ISO ou `YYYY-MM-DD`. |
-| `end`   | string             | Não         | Data/hora fim do filtro (`CreatedAt <= end`).                                   |
-| `team`  | "tulum" \| "dubai" | Não         | Time que você quer a taxa de conversão.                                         |
+| Param   | Tipo   | Obrigatório | Descrição                                                                       |
+| ------- | ------ | ----------- | ------------------------------------------------------------------------------- |
+| `start` | string | Não         | Data/hora início do filtro (`CreatedAt >= start`). Formato ISO ou `YYYY-MM-DD`. |
+| `end`   | string | Não         | Data/hora fim do filtro (`CreatedAt <= end`).                                   |
 
 ### Resposta
 
 ```json
 {
-  "data": {
-    "conversionTax": 0.75
-  }
+  "data": [
+    {
+      "id": "uuid",
+      "status": "NOT_CONVERTED" | "CANCELLED" | "CONVERTED",
+      "team": "tulum" | "dubai" | "none" | null,
+      "seller": {
+        "id": "uuid",
+        "name": "Nome do Vendedor",
+        "email": "email@exemplo.com",
+        "team": "tulum" | "dubai" | "none",
+        "shift": "MORNING" | "NIGHT",
+        "imageUrl": "https://..." | null,
+        "permission": "comercial" | "supervisor",
+        "createdAt": "2026-01-01T00:00:00.000Z"
+      } | undefined
+    }
+  ]
 }
 ```
 
 ### Notas
 
-- `conversionTax` é um número entre 0 e 1 (ex: 0.75 = 75% de conversão)
-- Calculado como: quantidade de requests com status `CONVERTED` / total de requests no período
-- Retorna 0 se não houver requests no período
+- `seller` pode ser `undefined` quando o formulário não tem `sellerHelenaId` ou o vendedor não foi encontrado
+- O objeto `seller` segue o mesmo formato padronizado das outras rotas do dashboard (`order-summaries`, `sellers`)
+- Ordenado por `CreatedAt` decrescente
 
 ---
 
