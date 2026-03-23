@@ -13,11 +13,11 @@ function getDaysInMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 }
 
-interface SalesRaceProps {
-  data: OperationResponse["salesRace"];
+interface SalesProgressProps {
+  data: OperationResponse["salesProgress"];
 }
 
-export function SalesRace({ data }: SalesRaceProps) {
+export function SalesProgress({ data }: SalesProgressProps) {
   const now = new Date();
   const currentDay = now.getDate();
   const totalDays = getDaysInMonth(now);
@@ -27,7 +27,8 @@ export function SalesRace({ data }: SalesRaceProps) {
   if (!leader) return null;
 
   const entries = data.teams.map((team) => {
-    const ratio = leader.averageProfit > 0 ? team.averageProfit / leader.averageProfit : 0;
+    const ratio =
+      leader.averageProfit > 0 ? team.averageProfit / leader.averageProfit : 0;
     const width = ratio * monthProgress * 100;
     return { ...team, width: `${Math.max(width, 8)}%` };
   });
@@ -45,7 +46,7 @@ export function SalesRace({ data }: SalesRaceProps) {
           🏆
         </span>
         <span className="text-xs uppercase tracking-[1.5px] opacity-70 font-semibold">
-          Corrida de Vendas
+          Progresso de Vendas
         </span>
         <span className="text-[11px] opacity-40 ml-auto">
           Lucro médio do mês

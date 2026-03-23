@@ -119,7 +119,7 @@ export async function GET() {
     const monthDailySummaries = allDailySummaries.filter(
       (ds) => ds.date >= monthStartStr,
     );
-    const salesRace = buildSalesRace(
+    const salesProgress = buildSalesProgress(
       filterNonCancelled(monthOrders),
       monthDailySummaries,
       now,
@@ -143,7 +143,7 @@ export async function GET() {
       monthlyRanking,
       dailyRanking,
       operationKpis,
-      salesRace,
+      salesProgress,
       weeklyRevenueChart,
       conquests,
     };
@@ -260,12 +260,12 @@ function buildOperationKpis(
   };
 }
 
-function buildSalesRace(
+function buildSalesProgress(
   monthOrders: ExternalOrderSummary[],
   monthDailySummaries: ExternalDailySummary[],
   now: DateTime,
   teamOfToday: string,
-): OperationResponse["salesRace"] {
+): OperationResponse["salesProgress"] {
   const todayStr = now.toFormat("yyyy-MM-dd");
 
   // 1. Profit per team from OrderSummaries (start of month to yesterday)

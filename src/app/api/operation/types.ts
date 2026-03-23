@@ -96,7 +96,7 @@ export interface OperationResponse {
     conversionTaxChange: number | null;
     repasseChange: number | null;
   };
-  salesRace: {
+  salesProgress: {
     teams: Array<{ name: string; averageProfit: number }>;
     todayProfit: { team: string; profit: number };
     profitDifference: number;

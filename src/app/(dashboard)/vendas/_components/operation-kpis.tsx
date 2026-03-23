@@ -73,7 +73,7 @@ function KpiCard({
       <div className="text-[11px] uppercase tracking-widest text-text-muted font-semibold mb-1.5">
         {label}
       </div>
-      <div className="font-display text-[32px] font-bold text-text-primary tracking-tight leading-none">
+      <div className="font-display text-3xl font-bold text-text-primary tracking-tight leading-none">
         {value}
       </div>
       {changeText !== null && (

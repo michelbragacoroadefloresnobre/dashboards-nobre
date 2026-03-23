@@ -8,11 +8,11 @@ import { Carousel } from "./carousel";
 const TOTAL_SLOTS = 9;
 const PER_PAGE = 3;
 
-interface ConquestsProps {
+interface TopSalesProps {
   data: OperationResponse["conquests"];
 }
 
-export function Conquests({ data }: ConquestsProps) {
+export function TopSales({ data }: TopSalesProps) {
   const slots = buildSlots(data);
   const totalPages = Math.ceil(slots.length / PER_PAGE);
   const carousel = useCarousel(totalPages);
@@ -69,7 +69,7 @@ export function Conquests({ data }: ConquestsProps) {
     <div className="bg-bg-card rounded-2xl border border-border shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.03)] flex flex-col shrink-0 overflow-hidden">
       <div className="flex items-center justify-between px-[22px] pt-[18px] shrink-0">
         <div className="text-xs font-semibold uppercase tracking-[1.2px] text-text-secondary flex items-center gap-2">
-          <span className="text-[15px]">🎯</span> Conquistas do Mês
+          <span className="text-[15px]">🎯</span> Maiores Vendas do Mês
         </div>
       </div>
       <div className="px-[22px] pt-4 pb-[22px]">

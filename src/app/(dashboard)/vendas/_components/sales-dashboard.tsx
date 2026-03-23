@@ -1,12 +1,12 @@
 "use client";
 
 import { useDashboardData } from "@/app/(dashboard)/vendas/_hooks/use-dashboard-data";
-import { Conquests } from "./conquests";
+import { TopSales } from "./top-sales";
 import { DailyRanking } from "./daily-ranking";
 import { HeaderBanner } from "./header-banner";
 import { MonthlyRanking } from "./monthly-ranking";
 import { OperationKPIs } from "./operation-kpis";
-import { SalesRace } from "./sales-race";
+import { SalesProgress } from "./sales-progress";
 import { WeeklyRevenueChart } from "./weekly-revenue-chart";
 
 export function SalesDashboard() {
@@ -38,20 +38,23 @@ export function SalesDashboard() {
 
       {/* Col Left */}
       <div className="flex flex-col gap-5 min-h-0 animate-fade-up-1">
-        <MonthlyRanking data={data.monthlyRanking} referenceMonth={data.referenceMonth} />
+        <MonthlyRanking
+          data={data.monthlyRanking}
+          referenceMonth={data.referenceMonth}
+        />
       </div>
 
       {/* Col Center */}
       <div className="flex flex-col gap-5 min-h-0 animate-fade-up-2">
         <OperationKPIs data={data.operationKpis} />
-        <SalesRace data={data.salesRace} />
+        <SalesProgress data={data.salesProgress} />
         <WeeklyRevenueChart data={data.weeklyRevenueChart} />
       </div>
 
       {/* Col Right */}
       <div className="flex flex-col gap-5 min-h-0 animate-fade-up-3">
         <DailyRanking data={data.dailyRanking} />
-        <Conquests data={data.conquests} />
+        <TopSales data={data.conquests} />
       </div>
     </div>
   );
