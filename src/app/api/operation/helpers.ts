@@ -75,7 +75,13 @@ export function buildMonthlyRanking(
   const conversionMap = buildConversionMap(forms);
   const sellerMap = new Map<
     string,
-    { name: string; imageUrl: string | null; fat: number; orders: number }
+    {
+      name: string;
+      imageUrl: string | null;
+      fat: number;
+      cost: number;
+      orders: number;
+    }
   >();
 
   for (const order of orders) {
@@ -84,9 +90,11 @@ export function buildMonthlyRanking(
     const key = order.seller.id;
     const entry = sellerMap.get(key);
     const amount = parseFloat(order.amount);
+    const cost = order.cost ? parseFloat(order.cost) : 0;
 
     if (entry) {
       entry.fat += amount;
+      entry.cost += cost;
       entry.orders += 1;
       if (!entry.imageUrl && order.seller.imageUrl) {
         entry.imageUrl = order.seller.imageUrl;
@@ -96,6 +104,7 @@ export function buildMonthlyRanking(
         name: order.seller.name,
         imageUrl: order.seller.imageUrl ?? null,
         fat: amount,
+        cost,
         orders: 1,
       });
     }
@@ -104,13 +113,11 @@ export function buildMonthlyRanking(
   const sellers = Array.from(sellerMap, ([id, s]) => ({
     id,
     ...s,
+    profit: s.fat - s.cost,
     tm: s.orders > 0 ? s.fat / s.orders : 0,
   }));
 
-  sellers.sort((a, b) => {
-    if (b.orders !== a.orders) return b.orders - a.orders;
-    return b.tm - a.tm;
-  });
+  sellers.sort((a, b) => b.profit - a.profit);
 
   return sellers.map((s, i) => {
     const conv = conversionMap.get(s.id);
@@ -136,7 +143,13 @@ export function buildDailyRanking(
   const conversionMap = buildConversionMap(forms);
   const sellerMap = new Map<
     string,
-    { name: string; imageUrl: string | null; fat: number; orders: number }
+    {
+      name: string;
+      imageUrl: string | null;
+      fat: number;
+      cost: number;
+      orders: number;
+    }
   >();
 
   for (const order of orders) {
@@ -146,9 +159,11 @@ export function buildDailyRanking(
     const key = order.seller.id;
     const entry = sellerMap.get(key);
     const amount = parseFloat(order.amount);
+    const cost = order.cost ? parseFloat(order.cost) : 0;
 
     if (entry) {
       entry.fat += amount;
+      entry.cost += cost;
       entry.orders += 1;
       if (!entry.imageUrl && order.seller.imageUrl) {
         entry.imageUrl = order.seller.imageUrl;
@@ -158,6 +173,7 @@ export function buildDailyRanking(
         name: order.seller.name,
         imageUrl: order.seller.imageUrl ?? null,
         fat: amount,
+        cost,
         orders: 1,
       });
     }
@@ -166,13 +182,11 @@ export function buildDailyRanking(
   const sellers = Array.from(sellerMap, ([id, s]) => ({
     id,
     ...s,
+    profit: s.fat - s.cost,
     tm: s.orders > 0 ? s.fat / s.orders : 0,
   }));
 
-  sellers.sort((a, b) => {
-    if (b.orders !== a.orders) return b.orders - a.orders;
-    return b.tm - a.tm;
-  });
+  sellers.sort((a, b) => b.profit - a.profit);
 
   return sellers.map((s, i) => {
     const conv = conversionMap.get(s.id);

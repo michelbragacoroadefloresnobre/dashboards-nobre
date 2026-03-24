@@ -44,6 +44,7 @@ export async function GET() {
       allDailySummaries,
       recentDailySummaries,
       teamOfTodayRes,
+      topSales,
     ] = await Promise.all([
       fetchApi<ExternalOrderSummary[]>(
         `${API_BASE}/order-summaries?start=${startOfMonth.toISO()}&end=${now.endOf("day").toISO()}`,
@@ -56,6 +57,7 @@ export async function GET() {
         `${API_BASE}/daily-team-summaries?start=${sevenDaysAgo.toFormat("yyyy-MM-dd")}&end=${now.toFormat("yyyy-MM-dd")}`,
       ),
       fetchApi<ExternalTeamOfToday>(`${API_BASE}/team-of-today`),
+      fetchApi<ExternalOrderSummary[]>(`${API_BASE}/top-sales`),
     ]);
 
     const teamOfToday = teamOfTodayRes.team;
@@ -126,11 +128,17 @@ export async function GET() {
       teamOfToday,
     );
 
-    // 6. Weekly Revenue Chart
     const weeklyRevenueChart = buildWeeklyRevenueChart(recentDailySummaries);
 
-    // 7. Conquests
-    const conquests = buildConquests(filterNonCancelled(monthOrders));
+    const conquests = topSales.map((o) => ({
+      name: (o.product?.name ?? "Produto")
+        .replace(/^Coroa de Flores/i, "")
+        .trim(),
+      price: formatCurrency(parseFloat(o.amount), true),
+      imageUrl: o.product?.imageUrl,
+      sellerName: o.seller?.name,
+      sellerImageUrl: o.seller?.imageUrl ?? null,
+    }));
 
     const referenceMonth = now
       .setLocale("pt-BR")
@@ -337,23 +345,5 @@ function buildWeeklyRevenueChart(
       date: formatDateShort(ds.date),
       team: ds.team,
       invoice: parseFloat(ds.invoice),
-    }));
-}
-
-function buildConquests(
-  orders: ExternalOrderSummary[],
-): OperationResponse["conquests"] {
-  return orders
-    .slice()
-    .sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount))
-    .slice(0, 9)
-    .map((o) => ({
-      name: (o.product?.name ?? "Produto")
-        .replace(/^Coroa de Flores/i, "")
-        .trim(),
-      price: formatCurrency(parseFloat(o.amount), true),
-      imageUrl: o.product?.imageUrl,
-      sellerName: o.seller?.name,
-      sellerImageUrl: o.seller?.imageUrl ?? null,
     }));
 }

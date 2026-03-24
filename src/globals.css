@@ -1,25 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #F6F4F0;
-  --color-bg-card: #FFFFFF;
-  --color-bg-card-alt: #FAFAF8;
-  --color-text-primary: #1A1A1A;
-  --color-text-secondary: #6B6B6B;
-  --color-text-muted: #9A9A9A;
-  --color-accent-green: #2D6A4F;
-  --color-accent-green-light: #D8F3DC;
-  --color-accent-gold: #C8963E;
-  --color-accent-gold-light: #FFF3D6;
-  --color-accent-red: #C0392B;
-  --color-accent-red-light: #FDECEA;
-  --color-border: #E8E6E1;
-  --color-border-light: #F0EEEA;
-
-  --font-display: "Playfair Display", serif;
-  --font-body: "DM Sans", sans-serif;
-  --font-family-body: "DM Sans", sans-serif;
-  --font-family-display: "Playfair Display", serif;
+  --color-bg: #f6f4f0;
+  --color-bg-card: #ffffff;
+  --color-bg-card-alt: #fafaf8;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #6b6b6b;
+  --color-text-muted: #9a9a9a;
+  --color-accent-green: #2d6a4f;
+  --color-accent-green-light: #d8f3dc;
+  --color-accent-gold: #c8963e;
+  --color-accent-gold-light: #fff3d6;
+  --color-accent-red: #c0392b;
+  --color-accent-red-light: #fdecea;
+  --color-border: #e8e6e1;
+  --color-border-light: #f0eeea;
 }
 
 * {
@@ -35,7 +30,9 @@
   inset: 0;
   opacity: 0;
   transform: translateX(40px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
   pointer-events: none;
 }
 .carousel-page.active {
@@ -50,30 +47,127 @@
 
 /* ═══ ANIMATIONS ═══ */
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 @keyframes barGrow {
-  from { width: 0; }
+  from {
+    width: 0;
+  }
 }
 @keyframes shimmer {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.3); }
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.3);
+  }
 }
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.85); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
 }
 
-.animate-slide-down { animation: slideDown 0.5s ease-out; }
-.animate-fade-up { animation: fadeUp 0.6s ease-out both; }
-.animate-fade-up-1 { animation: fadeUp 0.6s ease-out 0.1s both; }
-.animate-fade-up-2 { animation: fadeUp 0.6s ease-out 0.2s both; }
-.animate-fade-up-3 { animation: fadeUp 0.6s ease-out 0.3s both; }
-.animate-bar-grow { animation: barGrow 1.2s ease-out both; }
-.animate-shimmer { display: inline-block; animation: shimmer 2s ease-in-out infinite; }
-.animate-pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
+.animate-slide-down {
+  animation: slideDown 0.5s ease-out;
+}
+.animate-fade-up {
+  animation: fadeUp 0.6s ease-out both;
+}
+.animate-fade-up-1 {
+  animation: fadeUp 0.6s ease-out 0.1s both;
+}
+.animate-fade-up-2 {
+  animation: fadeUp 0.6s ease-out 0.2s both;
+}
+.animate-fade-up-3 {
+  animation: fadeUp 0.6s ease-out 0.3s both;
+}
+.animate-bar-grow {
+  animation: barGrow 1.2s ease-out both;
+}
+.animate-shimmer {
+  display: inline-block;
+  animation: shimmer 2s ease-in-out infinite;
+}
+.animate-pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+
+/* ═══ CELEBRATION POPUP ═══ */
+@keyframes celebration-backdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes celebration-card {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes celebration-item {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes celebration-out {
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+.animate-celebration-backdrop {
+  animation: celebration-backdrop 0.3s ease-out both;
+}
+.animate-celebration-card {
+  animation: celebration-card 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.animate-celebration-item {
+  animation: celebration-item 0.4s ease-out both;
+}
+.animate-celebration-out {
+  animation: celebration-out 0.3s ease-in both;
+}
