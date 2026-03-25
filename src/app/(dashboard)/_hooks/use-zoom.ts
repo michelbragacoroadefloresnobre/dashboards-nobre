@@ -5,7 +5,7 @@ import { useState, useCallback, useEffect } from "react";
 const STORAGE_KEY = "dashboard-zoom";
 const MIN_ZOOM = 50;
 const MAX_ZOOM = 150;
-const STEP = 10;
+const STEP = 5;
 
 export function useZoom() {
   const [zoomLevel, setZoomLevel] = useState(100);

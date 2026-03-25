@@ -14,24 +14,24 @@ export function TopSales({ data }: TopSalesProps) {
 
   return (
     <div className="bg-bg-card rounded-2xl border border-border shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.03)] flex flex-col shrink-0 overflow-hidden">
-      <div className="flex items-center justify-between px-[22px] pt-[18px] shrink-0">
+      <div className="flex items-center justify-between px-[22px] pt-3.5 shrink-0">
         <div className="text-xs font-semibold uppercase tracking-[1.2px] text-text-secondary flex items-center gap-2">
           <span className="text-[15px]">🎯</span> Maiores Vendas do Mês
         </div>
       </div>
-      <div className="px-[22px] pt-4 pb-[22px]">
-        <div className="grid grid-cols-3 grid-rows-2 gap-3">
+      <div className="px-[22px] pt-3 pb-4">
+        <div className="grid grid-cols-3 grid-rows-2 gap-2.5">
           {slots.map((c, i) => (
             <div
               key={i}
-              className={`text-center p-3.5 px-2.5 rounded-[10px] border border-border-light shadow-sm flex flex-col items-center ${
+              className={`text-center py-2.5 px-2.5 rounded-[10px] border border-border-light shadow-sm flex flex-col items-center ${
                 c.locked ? "bg-bg-card-alt/60 opacity-50" : "bg-bg-card-alt"
               }`}
             >
               {/* Área da Imagem do Vendedor */}
-              <div className="w-18 h-18 rounded-full mx-auto mb-2.5 bg-linear-to-br from-[#e8e8e8] to-[#d4d4d4] flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-14 h-14 rounded-full mx-auto mb-2 bg-linear-to-br from-[#e8e8e8] to-[#d4d4d4] flex items-center justify-center overflow-hidden shrink-0">
                 {c.locked ? (
-                  <span className="text-3xl opacity-40">🔒</span>
+                  <span className="text-2xl opacity-40">🔒</span>
                 ) : c.sellerImageUrl ? (
                   <img
                     src={c.sellerImageUrl}
@@ -56,7 +56,7 @@ export function TopSales({ data }: TopSalesProps) {
               </div>
 
               {/* Nome do Vendedor */}
-              <div className="text-[11px] font-medium text-text-muted mt-1.5 border-t border-border-light pt-1.5 truncate w-full">
+              <div className="text-[11px] font-medium text-text-muted mt-1 border-t border-border-light pt-1 truncate w-full">
                 {c.sellerName ?? "—"}
               </div>
             </div>

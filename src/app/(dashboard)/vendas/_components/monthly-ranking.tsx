@@ -17,8 +17,8 @@ function posColor(pos: number) {
   return "text-text-muted";
 }
 
-// Row height: py-[9px]*2 + content ~34px + gap ~2px ≈ 54px
-const ROW_HEIGHT = 54;
+// Row height: py-[7px]*2 + content ~34px + gap ~2px ≈ 50px
+const ROW_HEIGHT = 50;
 
 interface MonthlyRankingProps {
   data: OperationResponse["monthlyRanking"];
@@ -57,7 +57,7 @@ export function MonthlyRanking({ data, referenceMonth }: MonthlyRankingProps) {
             <div
               key={v.name}
               data-flip-key={v.name}
-              className="grid grid-cols-[28px_36px_1fr_auto_auto_auto] items-center gap-2.5 py-[9px] px-3 rounded-[10px] bg-white"
+              className="grid grid-cols-[28px_36px_1fr_auto_auto_auto] items-center gap-2.5 py-1.75 px-3 rounded-[10px] bg-white"
             >
               <div
                 className={`text-[13px] font-bold text-center ${posColor(v.pos)}`}
