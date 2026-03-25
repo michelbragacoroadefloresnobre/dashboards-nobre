@@ -21,7 +21,7 @@ export function OperationKPIs({ data }: OperationKPIsProps) {
             label="Faturamento"
             value={data.revenue}
             change={data.revenueChange}
-            formatChange={formatPercent}
+            formatChange={formatCurrency}
           />
           <KpiCard
             label="Taxa de Conversão"
@@ -42,9 +42,13 @@ export function OperationKPIs({ data }: OperationKPIsProps) {
   );
 }
 
-function formatPercent(value: number): string {
-  const pct = (value * 100).toFixed(1);
-  return `${value >= 0 ? "+" : ""}${pct}%`;
+function formatCurrency(value: number): string {
+  const formatted = Math.abs(value).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 0,
+  });
+  return `${value >= 0 ? "+" : "-"}${formatted}`;
 }
 
 function formatPP(value: number): string {

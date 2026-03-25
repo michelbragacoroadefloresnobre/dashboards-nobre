@@ -121,6 +121,9 @@ export function buildMonthlyRanking(
 
   return sellers.map((s, i) => {
     const conv = conversionMap.get(s.id);
+    const above = i > 0 ? sellers[i - 1] : null;
+    const diff = above ? above.profit - s.profit : 0;
+    const gap = above && diff > 0 ? formatCurrency(diff) : null;
     return {
       pos: i + 1,
       initials: getInitials(s.name),
@@ -131,6 +134,7 @@ export function buildMonthlyRanking(
         ? `${Math.round((conv.converted / conv.total) * 100)}%`
         : null,
       tm: formatCurrency(s.tm, true),
+      gap,
     };
   });
 }
@@ -190,6 +194,9 @@ export function buildDailyRanking(
 
   return sellers.map((s, i) => {
     const conv = conversionMap.get(s.id);
+    const above = i > 0 ? sellers[i - 1] : null;
+    const diff = above ? above.profit - s.profit : 0;
+    const gap = above && diff > 0 ? formatCurrency(diff) : null;
     return {
       pos: i + 1,
       initials: getInitials(s.name),
@@ -200,6 +207,7 @@ export function buildDailyRanking(
         ? `${Math.round((conv.converted / conv.total) * 100)}%`
         : null,
       tm: formatCurrency(s.tm, true),
+      gap,
     };
   });
 }

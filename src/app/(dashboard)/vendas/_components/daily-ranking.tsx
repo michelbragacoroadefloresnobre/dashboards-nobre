@@ -34,7 +34,11 @@ export function DailyRanking({ data }: DailyRankingProps) {
   useEffect(() => {
     if (prevTop === null && currentTop !== null) {
       queueMicrotask(() => setPrevTop(currentTop));
-    } else if (prevTop !== null && currentTop !== null && currentTop !== prevTop) {
+    } else if (
+      prevTop !== null &&
+      currentTop !== null &&
+      currentTop !== prevTop
+    ) {
       const audio = new Audio("/ka-ching.mp3");
       audio.play().catch(() => {});
       celebrateTop1(currentTop);
@@ -79,7 +83,25 @@ export function DailyRanking({ data }: DailyRankingProps) {
                   {v.initials}
                 </div>
               )}
-              <div className="text-[13px] font-medium truncate">{v.name}</div>
+              <div className="min-w-0">
+                <div className="text-[13px] font-medium truncate">{v.name}</div>
+                {v.gap &&
+                  (() => {
+                    const val = parseInt(v.gap.replace(/\D/g, ""));
+                    const t = Math.min(val / 3000, 1);
+                    const r = Math.round(45 + t * (37 - 45));
+                    const g = Math.round(106 + t * (19 - 106));
+                    const b = Math.round(79 + t * (74 - 79));
+                    return (
+                      <div
+                        className="text-[10px] font-semibold"
+                        style={{ color: `rgb(${r}, ${g}, ${b})` }}
+                      >
+                        -{v.gap}
+                      </div>
+                    );
+                  })()}
+              </div>
               <div className="text-xs font-semibold text-center min-w-[32px]">
                 {v.orders}
               </div>

@@ -251,7 +251,7 @@ function buildOperationKpis(
 
   const revenueChange =
     yesterdayInvoice > 0
-      ? (todayInvoice - yesterdayInvoice) / yesterdayInvoice
+      ? todayInvoice - yesterdayInvoice
       : null;
   const conversionTaxChange =
     yesterdayConversionTax > 0 ? conversionTax - yesterdayConversionTax : null;

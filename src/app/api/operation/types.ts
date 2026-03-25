@@ -78,6 +78,7 @@ export interface OperationResponse {
     orders: number;
     conversion: string | null;
     tm: string;
+    gap: string | null;
   }>;
   dailyRanking: Array<{
     pos: number;
@@ -87,6 +88,7 @@ export interface OperationResponse {
     orders: number;
     conversion: string | null;
     tm: string;
+    gap: string | null;
   }>;
   operationKpis: {
     revenue: string;
