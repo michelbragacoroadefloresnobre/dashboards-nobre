@@ -43,8 +43,8 @@ export function TopSaleCelebration({
   const avatarColor = AVATAR_COLORS[position % AVATAR_COLORS.length];
 
   useEffect(() => {
-    const fadeTimer = setTimeout(() => setClosing(true), 4700);
-    const dismissTimer = setTimeout(onDismiss, 5000);
+    const fadeTimer = setTimeout(() => setClosing(true), 6700);
+    const dismissTimer = setTimeout(onDismiss, 7000);
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(dismissTimer);

@@ -13,24 +13,31 @@ export interface TopSaleEvent {
 
 function fireConfetti() {
   const colors = ["#C8963E", "#2D6A4F", "#FFFFFF", "#FFF3D6"];
+  const duration = 2000;
+  const end = Date.now() + duration;
 
-  // Burst from bottom-left
-  confetti({
-    particleCount: 60,
-    angle: 60,
-    spread: 55,
-    origin: { x: 0, y: 1 },
-    colors,
-  });
+  const frame = () => {
+    confetti({
+      particleCount: 4,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0, y: Math.random() * 0.5 },
+      colors,
+    });
+    confetti({
+      particleCount: 4,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1, y: Math.random() * 0.5 },
+      colors,
+    });
 
-  // Burst from bottom-right
-  confetti({
-    particleCount: 60,
-    angle: 120,
-    spread: 55,
-    origin: { x: 1, y: 1 },
-    colors,
-  });
+    if (Date.now() < end) {
+      requestAnimationFrame(frame);
+    }
+  };
+
+  frame();
 }
 
 export function useTopSaleEvent() {
@@ -51,19 +58,18 @@ export function useTopSaleEvent() {
 
       setCurrentEvent(data);
 
-      // Play ka-ching sound at max volume
-      const audio = new Audio("/ka-ching.mp3");
+      const audio = new Audio("/congratulations.mp3");
       audio.volume = 1;
       audio.play().catch(() => {});
 
-      // Fire confetti
-      fireConfetti();
+      // Fire confetti after 4 seconds
+      setTimeout(() => fireConfetti(), 3000);
 
       // Invalidate dashboard cache
       queryClient.invalidateQueries({ queryKey: ["operation"] });
 
       // Auto-dismiss after 5s
-      timerRef.current = setTimeout(() => setCurrentEvent(null), 5000);
+      timerRef.current = setTimeout(() => setCurrentEvent(null), 20000);
     });
 
     return () => {
