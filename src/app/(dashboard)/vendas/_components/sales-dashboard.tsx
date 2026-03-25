@@ -1,7 +1,6 @@
 "use client";
 
 import { useDashboardData } from "@/app/(dashboard)/vendas/_hooks/use-dashboard-data";
-import { useQueryClient } from "@tanstack/react-query";
 import { useTopSaleEvent } from "../_hooks/use-top-sale-event";
 import { DailyRanking } from "./daily-ranking";
 import { HeaderBanner } from "./header-banner";
@@ -14,21 +13,10 @@ import { WeeklyRevenueChart } from "./weekly-revenue-chart";
 
 export function SalesDashboard() {
   const { data, isLoading, isError } = useDashboardData();
-  const queryClient = useQueryClient();
   const { currentEvent, dismiss } = useTopSaleEvent();
 
   return (
     <>
-      {process.env.NODE_ENV === "development" && (
-        <button
-          onClick={() =>
-            queryClient.invalidateQueries({ queryKey: ["operation"] })
-          }
-          className="fixed bottom-6 right-20 z-50 bg-accent-red text-white text-xs font-semibold px-3 py-2 rounded-full shadow-lg opacity-60 hover:opacity-100 transition-opacity"
-        >
-          Invalidar cache
-        </button>
-      )}
       {isLoading ? (
         <div className="flex items-center justify-center h-full">
           <div className="text-text-muted text-sm animate-pulse">
