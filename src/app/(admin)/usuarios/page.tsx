@@ -1,6 +1,6 @@
-import { Metadata } from "next";
-import prisma from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-utils";
+import prisma from "@/lib/prisma";
+import { Metadata } from "next";
 import { UserManagement } from "./_components/user-management";
 
 export const metadata: Metadata = {
@@ -18,7 +18,10 @@ export default async function UsersPage() {
       role: true,
       createdAt: true,
     },
-    orderBy: { createdAt: "asc" },
+    where: {
+      role: { not: "SUPER_ADMIN" },
+    },
+    orderBy: { name: "asc" },
   });
 
   return (
