@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
-import Link from "next/link";
 import { auth } from "@/lib/auth";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function AdminLayout({
   children,
@@ -20,7 +20,7 @@ export default async function AdminLayout({
           &larr; Voltar ao painel
         </Link>
       </header>
-      <main className="max-w-2xl mx-auto py-10 px-6">{children}</main>
+      <main className="max-w-4xl mx-auto py-10 px-6">{children}</main>
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export type Role = "SUPER_ADMIN" | "ADMIN" | "VIEWER";
 
@@ -39,5 +39,5 @@ export async function requireRole(minimumRole: Role) {
 }
 
 export function canModifyUser(actorRole: Role, targetRole: Role): boolean {
-  return ROLE_HIERARCHY[actorRole] > ROLE_HIERARCHY[targetRole];
+  return ROLE_HIERARCHY[actorRole] >= ROLE_HIERARCHY[targetRole];
 }

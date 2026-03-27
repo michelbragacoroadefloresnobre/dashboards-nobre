@@ -29,6 +29,16 @@ npm run start    # Servir build de produção
 - Body tem `overflow: hidden` e `h-screen` — nunca adicionar scroll
 - Resolução de referência: 1920x1080 (Full HD)
 
+## Autenticação e Autorização
+
+Wrappers em `src/lib/auth-utils.ts` — usar sempre ao criar páginas protegidas ou server actions:
+
+- **`requireAuth()`** — garante que o usuário está autenticado. Redireciona para `/login` se não estiver. Retorna `AuthenticatedSession` com `user.id`, `user.role`, etc.
+- **`requireRole(minimumRole)`** — garante autenticação + role mínima (`VIEWER`, `ADMIN`, `SUPER_ADMIN`). Redireciona para `/vendas` se não tiver permissão.
+- **`canModifyUser(actorRole, targetRole)`** — verifica se o ator pode modificar o alvo (role estritamente superior). Usar antes de qualquer operação de escrita sobre usuários.
+
+Toda Server Action que modifica dados deve chamar `requireAuth()` ou `requireRole()` no início. Toda page protegida do grupo `(admin)` deve usar `requireRole()`.
+
 ## Estrutura
 
 - Rotas: `src/app/(dashboard)/[nome]/page.tsx`

@@ -1,23 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { changePassword } from "../_actions/change-password";
+import { createUser } from "../_actions/create-user";
 
 const inputClassName =
   "w-full rounded-lg border border-border bg-bg-card-alt px-3 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent-green focus:ring-1 focus:ring-accent-green transition-colors";
 
-interface ChangePasswordDialogProps {
+interface CreateUserDialogProps {
   open: boolean;
   onClose: () => void;
+  onCreated: (password: string, userName: string) => void;
 }
 
-export function ChangePasswordDialog({
+export function CreateUserDialog({
   open,
   onClose,
-}: ChangePasswordDialogProps) {
+  onCreated,
+}: CreateUserDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
-  const [success, setSuccess] = useState<string>();
   const overlayRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -28,19 +29,18 @@ export function ChangePasswordDialog({
 
     if (open) {
       setError(undefined);
-      setSuccess(undefined);
       document.addEventListener("keydown", handleEscape);
       return () => document.removeEventListener("keydown", handleEscape);
     }
   }, [open, onClose]);
 
   function handleSubmit(formData: FormData) {
+    const name = formData.get("name") as string;
     startTransition(async () => {
-      const result = await changePassword(null, formData);
-      if (result.success) {
-        setSuccess(result.success);
+      const result = await createUser(null, formData);
+      if (result.success && result.generatedPassword) {
         formRef.current?.reset();
-        setTimeout(onClose, 1500);
+        onCreated(result.generatedPassword, name);
       } else {
         setError(result.error);
       }
@@ -59,9 +59,7 @@ export function ChangePasswordDialog({
     >
       <div className="bg-white rounded-xl border border-border shadow-xl w-full max-w-md mx-4 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-text-primary">
-            Alterar senha
-          </h2>
+          <h2 className="text-lg font-bold text-text-primary">Novo usuário</h2>
           <button
             onClick={onClose}
             className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
@@ -85,65 +83,62 @@ export function ChangePasswordDialog({
         <form ref={formRef} action={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <label
-              htmlFor="currentPassword"
+              htmlFor="create-name"
               className="block text-sm font-medium text-text-primary"
             >
-              Senha atual
+              Nome
             </label>
             <input
-              id="currentPassword"
-              name="currentPassword"
-              type="password"
+              id="create-name"
+              name="name"
+              type="text"
               required
-              autoComplete="current-password"
               className={inputClassName}
-              placeholder="••••••••"
+              placeholder="Nome completo"
             />
           </div>
 
           <div className="space-y-1.5">
             <label
-              htmlFor="newPassword"
+              htmlFor="create-email"
               className="block text-sm font-medium text-text-primary"
             >
-              Nova senha
+              Email
             </label>
             <input
-              id="newPassword"
-              name="newPassword"
-              type="password"
+              id="create-email"
+              name="email"
+              type="email"
               required
-              autoComplete="new-password"
               className={inputClassName}
-              placeholder="••••••••"
+              placeholder="email@exemplo.com"
             />
           </div>
 
           <div className="space-y-1.5">
             <label
-              htmlFor="confirmPassword"
+              htmlFor="create-role"
               className="block text-sm font-medium text-text-primary"
             >
-              Confirmar nova senha
+              Cargo
             </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
+            <select
+              id="create-role"
+              name="role"
               required
-              autoComplete="new-password"
+              defaultValue=""
               className={inputClassName}
-              placeholder="••••••••"
-            />
+            >
+              <option value="" disabled>
+                Selecione um cargo
+              </option>
+              <option value="ADMIN">Admin</option>
+              <option value="VIEWER">Visualizador</option>
+            </select>
           </div>
 
           {error && (
             <p className="text-sm text-accent-red text-center">{error}</p>
-          )}
-          {success && (
-            <p className="text-sm text-accent-green text-center">
-              {success}
-            </p>
           )}
 
           <div className="flex gap-3 pt-2">
@@ -159,7 +154,7 @@ export function ChangePasswordDialog({
               disabled={isPending}
               className="flex-1 rounded-lg bg-accent-green py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer"
             >
-              {isPending ? "Salvando..." : "Alterar senha"}
+              {isPending ? "Criando..." : "Criar usuário"}
             </button>
           </div>
         </form>
