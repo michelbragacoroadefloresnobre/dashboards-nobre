@@ -3,14 +3,14 @@ import { redirect } from "next/navigation";
 
 export type Role = "SUPER_ADMIN" | "ADMIN" | "VIEWER";
 
-interface AuthenticatedUser {
+export interface AuthenticatedUser {
   id: string;
   name?: string | null;
   email?: string | null;
   role: Role;
 }
 
-interface AuthenticatedSession {
+export interface AuthenticatedSession {
   user: AuthenticatedUser;
 }
 

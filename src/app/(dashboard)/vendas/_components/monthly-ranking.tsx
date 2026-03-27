@@ -61,7 +61,7 @@ export function MonthlyRanking({ data, referenceMonth }: MonthlyRankingProps) {
             <div
               key={v.name}
               data-flip-key={v.name}
-              className="grid grid-cols-[28px_36px_1fr_auto_auto_auto] items-center gap-2.5 py-1.75 px-3 rounded-[10px] bg-white"
+              className="grid grid-cols-[28px_36px_1fr_auto_auto_auto_auto] items-center gap-2.5 py-1.75 px-3 rounded-[10px] bg-white"
             >
               <div
                 className={`text-[13px] font-bold text-center ${posColor(v.pos)}`}
@@ -84,26 +84,13 @@ export function MonthlyRanking({ data, referenceMonth }: MonthlyRankingProps) {
                   {v.initials}
                 </div>
               )}
-              <div className="min-w-0">
-                <div className="text-[13px] font-medium truncate">{v.name}</div>
-                {v.gap &&
-                  (() => {
-                    const val = parseInt(v.gap.replace(/\D/g, ""));
-                    const t = Math.min(val / 3000, 1);
-                    const r = Math.round(45 + t * (37 - 45));
-                    const g = Math.round(106 + t * (19 - 106));
-                    const b = Math.round(79 + t * (74 - 79));
-                    return (
-                      <div
-                        className="text-[10px] font-semibold"
-                        style={{ color: `rgb(${r}, ${g}, ${b})` }}
-                      >
-                        -{v.gap}
-                      </div>
-                    );
-                  })()}
+              <div className="text-[13px] font-medium truncate min-w-0">
+                {v.name}
               </div>
-              <div className="text-xs font-semibold text-center min-w-[32px]">
+              <div className="text-xs font-bold text-center min-w-15.5">
+                {v.lm}
+              </div>
+              <div className="text-xs text-text-secondary text-center min-w-[32px]">
                 {v.orders}
               </div>
               <div className="text-xs text-text-secondary text-center min-w-[52px]">
@@ -131,13 +118,16 @@ export function MonthlyRanking({ data, referenceMonth }: MonthlyRankingProps) {
       </div>
       <div className="px-[22px] pt-4 pb-[22px] flex-1 flex flex-col min-h-0">
         {/* Header row */}
-        <div className="grid grid-cols-[28px_36px_1fr_auto_auto_auto] gap-2.5 px-3 pb-2 border-b border-border-light mb-1 shrink-0">
+        <div className="grid grid-cols-[28px_36px_1fr_auto_auto_auto_auto] gap-2.5 px-3 pb-2 border-b border-border-light mb-1 shrink-0">
           <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">
             #
           </span>
           <span />
           <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">
             Vendedor
+          </span>
+          <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold text-center">
+            LM
           </span>
           <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold text-center">
             Volume

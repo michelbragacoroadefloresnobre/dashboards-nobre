@@ -1,3 +1,4 @@
+import { withAuth, withErrorHandler } from "@/lib/api-handler";
 import { DateTime } from "luxon";
 import {
   buildDailyRanking,
@@ -19,8 +20,8 @@ const TIMEZONE = "America/Sao_Paulo";
 const API_BASE = "/api/v1/dashboard/operation";
 
 async function fetchApi<T>(path: string): Promise<T> {
-  const base = process.env.SYSTEM_API_URL;
-  if (!base) throw new Error("SYSTEM_API_URL is not configured");
+  const base = process.env.SISTEMA_CFN_URL;
+  if (!base) throw new Error("SISTEMA_CFN_URL is not configured");
 
   const res = await fetch(`${base}${path}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
@@ -29,8 +30,8 @@ async function fetchApi<T>(path: string): Promise<T> {
   return json.data as T;
 }
 
-export async function GET() {
-  try {
+export const GET = withErrorHandler(
+  withAuth(async (_request, _context, _session) => {
     const now = DateTime.now().setZone(TIMEZONE);
     const midnightToday = now.startOf("day");
     const midnightYesterday = midnightToday.minus({ days: 1 });
@@ -98,6 +99,7 @@ export async function GET() {
     const monthlyRanking = buildMonthlyRanking(
       filterNonCancelled(monthOrders),
       monthForms,
+      now,
     );
 
     // 3. Daily Ranking (filtered by team-of-today)
@@ -162,14 +164,8 @@ export async function GET() {
         headers: { "Cache-Control": "no-store, max-age=0" },
       },
     );
-  } catch (error) {
-    console.error("[/api/operation] Error:", error);
-    return Response.json(
-      { error: "Failed to fetch operation data" },
-      { status: 500 },
-    );
-  }
-}
+  }),
+);
 
 // ---------------------------------------------------------------------------
 // Section builders
@@ -234,25 +230,21 @@ function buildOperationKpis(
   );
 
   const todayInvoice = todaySummary ? parseFloat(todaySummary.invoice) : 0;
-  const todayCost =
-    todaySummary?.cost != null ? parseFloat(todaySummary.cost) : null;
   const yesterdayInvoice = yesterdaySummary
     ? parseFloat(yesterdaySummary.invoice)
     : 0;
-  const yesterdayCost =
-    yesterdaySummary?.cost != null ? parseFloat(yesterdaySummary.cost) : null;
 
   const repasse =
-    todayInvoice > 0 && todayCost != null ? todayCost / todayInvoice : 0;
+    todaySummary?.passthroughRate != null
+      ? parseFloat(todaySummary.passthroughRate)
+      : 0;
   const yesterdayRepasse =
-    yesterdayInvoice > 0 && yesterdayCost != null
-      ? yesterdayCost / yesterdayInvoice
+    yesterdaySummary?.passthroughRate != null
+      ? parseFloat(yesterdaySummary.passthroughRate)
       : 0;
 
   const revenueChange =
-    yesterdayInvoice > 0
-      ? todayInvoice - yesterdayInvoice
-      : null;
+    yesterdayInvoice > 0 ? todayInvoice - yesterdayInvoice : null;
   const conversionTaxChange =
     yesterdayConversionTax > 0 ? conversionTax - yesterdayConversionTax : null;
   const repasseChange =

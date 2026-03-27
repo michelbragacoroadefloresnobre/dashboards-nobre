@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// External API response shapes (from SYSTEM_API_URL)
+// External API response shapes (from SISTEMA_CFN_URL)
 // ---------------------------------------------------------------------------
 
 export interface ExternalOrderSummary {
@@ -33,6 +33,7 @@ export interface ExternalDailySummary {
   cost: string | null;
   orderTotal: number;
   team: "tulum" | "dubai" | "none";
+  passthroughRate: string | null; // decimal string (0–1), e.g. "0.4500"
 }
 
 export interface ExternalTeamOfToday {
@@ -78,7 +79,7 @@ export interface OperationResponse {
     orders: number;
     conversion: string | null;
     tm: string;
-    gap: string | null;
+    lm: string;
   }>;
   dailyRanking: Array<{
     pos: number;

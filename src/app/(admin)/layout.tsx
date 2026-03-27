@@ -20,7 +20,7 @@ export default async function AdminLayout({
           &larr; Voltar ao painel
         </Link>
       </header>
-      <main className="max-w-4xl mx-auto py-10 px-6">{children}</main>
+      <main className="max-w-5xl mx-auto py-10 px-6">{children}</main>
     </div>
   );
 }

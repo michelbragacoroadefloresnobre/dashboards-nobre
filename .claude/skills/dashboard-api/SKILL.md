@@ -86,7 +86,8 @@ Resumos agregados por dia. Cada registro representa a operação de um dia intei
         "invoice": "5000.00",
         "cost": "2500.00",
         "orderTotal": 25,
-        "team": "tulum" | "dubai" | "none"
+        "team": "tulum" | "dubai" | "none",
+        "passthroughRate": "0.50" | null
       }
     ]
 }
@@ -99,6 +100,7 @@ Resumos agregados por dia. Cada registro representa a operação de um dia intei
 - `cost` = soma dos `cost` dos OrderSummary não-cancelados do dia
 - `orderTotal` = contagem de OrderSummary não-cancelados do dia
 - `team` = time do primeiro pedido criado após 9h naquele dia
+- `passthroughRate` = taxa de repasse: `soma dos costs (onde cost != null) / soma dos amounts (onde cost != null)`. Valor entre 0 e 1 (ex: `"0.4500"` = 45%). `null` quando nenhum pedido do dia tem custo definido
 
 ---
 

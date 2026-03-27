@@ -71,8 +71,10 @@ function buildConversionMap(
 export function buildMonthlyRanking(
   orders: ExternalOrderSummary[],
   forms: ExternalForm[],
+  now: DateTime,
 ) {
   const conversionMap = buildConversionMap(forms);
+  const midnightToday = now.startOf("day");
   const sellerMap = new Map<
     string,
     {
@@ -81,21 +83,28 @@ export function buildMonthlyRanking(
       fat: number;
       cost: number;
       orders: number;
+      daysWorked: Set<string>;
     }
   >();
 
   for (const order of orders) {
     if (!order.seller) continue;
     if (order.seller.permission !== "comercial") continue;
+
+    const orderDate = DateTime.fromISO(order.createdAt).setZone(now.zone);
+    if (orderDate >= midnightToday) continue;
+
     const key = order.seller.id;
     const entry = sellerMap.get(key);
     const amount = parseFloat(order.amount);
     const cost = order.cost ? parseFloat(order.cost) : 0;
+    const dayKey = orderDate.toISODate()!;
 
     if (entry) {
       entry.fat += amount;
       entry.cost += cost;
       entry.orders += 1;
+      entry.daysWorked.add(dayKey);
       if (!entry.imageUrl && order.seller.imageUrl) {
         entry.imageUrl = order.seller.imageUrl;
       }
@@ -106,6 +115,7 @@ export function buildMonthlyRanking(
         fat: amount,
         cost,
         orders: 1,
+        daysWorked: new Set([dayKey]),
       });
     }
   }
@@ -115,15 +125,13 @@ export function buildMonthlyRanking(
     ...s,
     profit: s.fat - s.cost,
     tm: s.orders > 0 ? s.fat / s.orders : 0,
+    lm: s.daysWorked.size > 0 ? (s.fat - s.cost) / s.daysWorked.size : 0,
   }));
 
-  sellers.sort((a, b) => b.profit - a.profit);
+  sellers.sort((a, b) => b.lm - a.lm);
 
   return sellers.map((s, i) => {
     const conv = conversionMap.get(s.id);
-    const above = i > 0 ? sellers[i - 1] : null;
-    const diff = above ? above.profit - s.profit : 0;
-    const gap = above && diff > 0 ? formatCurrency(diff) : null;
     return {
       pos: i + 1,
       initials: getInitials(s.name),
@@ -134,7 +142,7 @@ export function buildMonthlyRanking(
         ? `${Math.round((conv.converted / conv.total) * 100)}%`
         : null,
       tm: formatCurrency(s.tm, true),
-      gap,
+      lm: formatCurrency(s.lm),
     };
   });
 }

@@ -39,6 +39,26 @@ Wrappers em `src/lib/auth-utils.ts` — usar sempre ao criar páginas protegidas
 
 Toda Server Action que modifica dados deve chamar `requireAuth()` ou `requireRole()` no início. Toda page protegida do grupo `(admin)` deve usar `requireRole()`.
 
+### API Routes
+
+Wrappers composáveis em `src/lib/api-handler.ts` — usar sempre em route handlers (`GET`, `POST`, etc.):
+
+- **`withErrorHandler(handler)`** — padroniza respostas e gerencia exceções. Captura `HttpException` (status 200–499) e retorna `{ error: message }` com o status. Erros 500+ ou inesperados retornam `{ error: "Algo deu errado. Contate o suporte." }` com status 500.
+- **`withAuth(handler, options?)`** — verifica autenticação (401) e role mínima opcional via `minimumRole` (403). Passa `session` como terceiro argumento ao handler.
+- **`HttpException`** (`src/lib/http-exception.ts`) — classe para lançar erros HTTP controlados: `throw new HttpException(404, "Recurso não encontrado.")`.
+
+Composição: `withErrorHandler` sempre por fora, `withAuth` por dentro:
+
+```typescript
+// Rota protegida:
+export const GET = withErrorHandler(withAuth(async (req, ctx, session) => { ... }));
+
+// Rota pública com tratamento de erros:
+export const GET = withErrorHandler(async (req, ctx) => { ... });
+```
+
+**Nunca** usar `requireAuth()` ou `requireRole()` em API routes — eles usam `redirect()` que não funciona em route handlers.
+
 ## Estrutura
 
 - Rotas: `src/app/(dashboard)/[nome]/page.tsx`

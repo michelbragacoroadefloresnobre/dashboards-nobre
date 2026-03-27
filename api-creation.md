@@ -1,6 +1,6 @@
 Muito bem. Vamos usar a abordagem de processamento atualizado então.
 
-Use a skill dashboard-api para ter acesso a api. A url da api esta na variavel de ambiente SYSTEM_API_URL. (ex: process.env.SYSTEM_API_URL/api/v1/dashboard/operation/daily-summaries)
+Use a skill dashboard-api para ter acesso a api. A url da api esta na variavel de ambiente SISTEMA_CFN_URL. (ex: process.env.SISTEMA_CFN_URL/api/v1/dashboard/operation/daily-summaries)
 
 Quero que você comece fazendo o backend, nada de frontend por enquanto. Você vai agir estritamente como um programador backend, sem tocar no codigo front end da aplicação.
 
