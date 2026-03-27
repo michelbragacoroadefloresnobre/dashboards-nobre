@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { useDashboardData } from "@/app/(dashboard)/vendas/_hooks/use-dashboard-data";
 import { useTopSaleEvent } from "../_hooks/use-top-sale-event";
 import { DailyRanking } from "./daily-ranking";
@@ -12,8 +14,13 @@ import { TopSales } from "./top-sales";
 import { WeeklyRevenueChart } from "./weekly-revenue-chart";
 
 export function SalesDashboard() {
-  const { data, isLoading, isError } = useDashboardData();
+  const { data: session } = useSession();
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const { data, isLoading, isError } = useDashboardData(selectedDate);
   const { currentEvent, dismiss } = useTopSaleEvent();
+
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
 
   return (
     <>
@@ -31,7 +38,12 @@ export function SalesDashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-[0.90fr_1.2fr_0.90fr] grid-rows-[auto_1fr] gap-5 p-6 h-full max-w-512 mx-auto">
-          <HeaderBanner data={data.headerBanner} />
+          <HeaderBanner
+            data={data.headerBanner}
+            isAdmin={isAdmin}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+          />
 
           {/* Col Left */}
           <div className="flex flex-col gap-5 min-h-0 animate-fade-up-1">
@@ -56,7 +68,7 @@ export function SalesDashboard() {
         </div>
       )}
 
-      {currentEvent && (
+      {currentEvent && !selectedDate && (
         <TopSaleCelebration event={currentEvent} onDismiss={dismiss} />
       )}
     </>

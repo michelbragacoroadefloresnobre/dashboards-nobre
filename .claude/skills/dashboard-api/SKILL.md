@@ -87,7 +87,7 @@ Resumos agregados por dia. Cada registro representa a operação de um dia intei
         "cost": "2500.00",
         "orderTotal": 25,
         "team": "tulum" | "dubai" | "none",
-        "passthroughRate": "0.50" | null
+        "passthroughRate": "0.5000" | null
       }
     ]
 }
@@ -175,11 +175,13 @@ Lista todos os formulários (OrderRequest) no período, com o vendedor associado
 
 ## 5. GET `/api/v1/dashboard/operation/top-sales`
 
-Retorna as **6 maiores vendas do mês atual com valor acima de R$1.500**, ordenadas por valor decrescente. O mês é calculado no fuso `America/Sao_Paulo` (dia 1 do mês corrente até agora).
+Retorna as **6 maiores vendas do mês com valor acima de R$1.500**, ordenadas por valor decrescente. O mês é calculado no fuso `America/Sao_Paulo`.
 
 ### Query Params
 
-Nenhum. O período é sempre o mês corrente.
+| Param  | Tipo   | Obrigatório | Descrição                                                                                                                               |
+| ------ | ------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `date` | string | Não         | Data de referência no formato `YYYY-MM-DD`. Busca do dia 1 do mês dessa data até o final desse dia. Quando omitido, usa a data de hoje. |
 
 ### Resposta
 

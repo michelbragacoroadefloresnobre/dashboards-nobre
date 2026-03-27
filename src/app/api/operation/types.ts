@@ -66,6 +66,7 @@ export interface ExternalForm {
 
 export interface OperationResponse {
   referenceMonth: string; // e.g. "Março 2026"
+  isHistorical: boolean;
   headerBanner: {
     highestRevenue: { value: string; date: string; team: string };
     highestOrders: { value: number; date: string; team: string };

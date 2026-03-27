@@ -1,12 +1,40 @@
+import { useRef, useState } from "react";
 import Image from "next/image";
 import type { OperationResponse } from "@/app/api/operation/types";
 
 interface HeaderBannerProps {
   data: OperationResponse["headerBanner"];
+  isAdmin?: boolean;
+  selectedDate?: string | null;
+  onDateChange?: (date: string | null) => void;
 }
 
-export function HeaderBanner({ data }: HeaderBannerProps) {
+function getTodayStr() {
+  return new Date().toLocaleDateString("sv-SE", {
+    timeZone: "America/Sao_Paulo",
+  });
+}
+
+export function HeaderBanner({
+  data,
+  isAdmin,
+  selectedDate,
+  onDateChange,
+}: HeaderBannerProps) {
   const { highestRevenue, highestOrders, today } = data;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [hasInputValue, setHasInputValue] = useState(!!selectedDate);
+
+  function applyDate() {
+    const value = inputRef.current?.value ?? "";
+    if (!value || value === getTodayStr()) {
+      if (inputRef.current) inputRef.current.value = "";
+      setHasInputValue(false);
+      onDateChange?.(null);
+    } else {
+      onDateChange?.(value);
+    }
+  }
 
   return (
     <div className="col-span-full flex items-center justify-between bg-gradient-to-br from-[#2D6A4F] via-[#1B4332] to-[#0B2920] rounded-2xl px-8 py-5 text-white relative overflow-hidden animate-slide-down">
@@ -68,11 +96,56 @@ export function HeaderBanner({ data }: HeaderBannerProps) {
         </div>
       </div>
 
-      <div className="z-1 text-right">
-        <div className="text-[13px] opacity-60">
-          <span className="inline-block size-1.75 bg-[#4ADE80] rounded-full animate-pulse-dot" />
-          &ensp;Ao vivo · {today.date} ·{" "}
-          <span className="capitalize">{today.team}</span>
+      {/* Right — status + admin date filter */}
+      <div className="z-1 flex items-center gap-3">
+        {isAdmin && (
+          <div className="flex items-center gap-2">
+            <input
+              ref={inputRef}
+              type="date"
+              defaultValue={selectedDate ?? ""}
+              onChange={(e) => setHasInputValue(!!e.target.value)}
+              max={getTodayStr()}
+              className="bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-[13px] text-white/90 outline-none focus:border-white/40 transition-colors scheme-dark"
+            />
+            {hasInputValue && (
+              <button
+                onClick={applyDate}
+                className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg px-2 py-1 text-[12px] text-white/80 hover:text-white transition-colors"
+                title="Aplicar data"
+              >
+                Filtrar
+              </button>
+            )}
+            {selectedDate && (
+              <button
+                onClick={() => {
+                  if (inputRef.current) inputRef.current.value = "";
+                  setHasInputValue(false);
+                  onDateChange?.(null);
+                }}
+                className="text-white/50 hover:text-white/90 transition-colors text-sm leading-none"
+                title="Voltar ao vivo"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
+        <div className="text-[13px] opacity-60 text-right">
+          {selectedDate ? (
+            <>
+              <span className="inline-block size-1.75 bg-amber-400 rounded-full" />
+              &ensp;Revisando · {today.date} ·{" "}
+              <span className="capitalize">{today.team}</span>
+            </>
+          ) : (
+            <>
+              <span className="inline-block size-1.75 bg-[#4ADE80] rounded-full animate-pulse-dot" />
+              &ensp;Ao vivo · {today.date} ·{" "}
+              <span className="capitalize">{today.team}</span>
+            </>
+          )}
         </div>
       </div>
     </div>

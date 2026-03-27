@@ -1,4 +1,5 @@
 import { withAuth, withErrorHandler } from "@/lib/api-handler";
+import { hasMinRole } from "@/lib/auth-utils";
 import { DateTime } from "luxon";
 import {
   buildDailyRanking,
@@ -32,7 +33,20 @@ async function fetchApi<T>(path: string): Promise<T> {
 
 export const GET = withErrorHandler(
   withAuth(async (_request, _context, _session) => {
-    const now = DateTime.now().setZone(TIMEZONE);
+    // -- Date override (admin only) -------------------------------------------
+    const dateParam = new URL(_request.url).searchParams.get("date");
+    const isAdmin = hasMinRole(_session.user.role, "ADMIN");
+    const overrideDate = isAdmin && dateParam ? dateParam : null;
+    const isHistorical = overrideDate !== null;
+
+    const now = overrideDate
+      ? DateTime.fromISO(overrideDate, { zone: TIMEZONE }).set({
+          hour: 23,
+          minute: 59,
+          second: 59,
+        })
+      : DateTime.now().setZone(TIMEZONE);
+
     const midnightToday = now.startOf("day");
     const midnightYesterday = midnightToday.minus({ days: 1 });
     const startOfMonth = now.startOf("month");
@@ -57,11 +71,17 @@ export const GET = withErrorHandler(
       fetchApi<ExternalDailySummary[]>(
         `${API_BASE}/daily-team-summaries?start=${sevenDaysAgo.toFormat("yyyy-MM-dd")}&end=${now.toFormat("yyyy-MM-dd")}`,
       ),
-      fetchApi<ExternalTeamOfToday>(`${API_BASE}/team-of-today`),
-      fetchApi<ExternalOrderSummary[]>(`${API_BASE}/top-sales`),
+      isHistorical
+        ? Promise.resolve(null)
+        : fetchApi<ExternalTeamOfToday>(`${API_BASE}/team-of-today`),
+      fetchApi<ExternalOrderSummary[]>(
+        `${API_BASE}/top-sales${overrideDate ? `?date=${overrideDate}` : ""}`,
+      ),
     ]);
 
-    const teamOfToday = teamOfTodayRes.team;
+    const teamOfToday = isHistorical
+      ? deriveTeamFromSummaries(allDailySummaries, now.toFormat("yyyy-MM-dd"))
+      : teamOfTodayRes!.team;
 
     // Fetch forms for conversion rate calculation
     const [monthForms, todayForms, yesterdayForms] = await Promise.all([
@@ -72,7 +92,7 @@ export const GET = withErrorHandler(
         `${API_BASE}/forms?start=${midnightToday.toISO()}&end=${now.endOf("day").toISO()}`,
       ),
       fetchApi<ExternalForm[]>(
-        `${API_BASE}/forms?start=${midnightYesterday.toISO()}&end=${midnightToday.toISO()}`,
+        `${API_BASE}/forms?start=${midnightYesterday.toISO()}&end=${midnightYesterday.endOf("day").toISO()}`,
       ),
     ]);
 
@@ -92,8 +112,12 @@ export const GET = withErrorHandler(
 
     // -- Processing -----------------------------------------------------------
 
-    // 1. Header Banner
-    const headerBanner = buildHeaderBanner(allDailySummaries, now, teamOfToday);
+    // 1. Header Banner (filter summaries up to the reference date)
+    const nowStr = now.toFormat("yyyy-MM-dd");
+    const summariesUntilNow = allDailySummaries.filter(
+      (ds) => ds.date <= nowStr,
+    );
+    const headerBanner = buildHeaderBanner(summariesUntilNow, now, teamOfToday);
 
     // 2. Monthly Ranking
     const monthlyRanking = buildMonthlyRanking(
@@ -149,6 +173,7 @@ export const GET = withErrorHandler(
 
     const payload: OperationResponse = {
       referenceMonth,
+      isHistorical,
       headerBanner,
       monthlyRanking,
       dailyRanking,
@@ -326,6 +351,14 @@ function buildSalesProgress(
     todayProfit: { team: teamOfToday, profit: todayProfit },
     profitDifference,
   };
+}
+
+function deriveTeamFromSummaries(
+  summaries: ExternalDailySummary[],
+  dateStr: string,
+): string {
+  const daySummary = summaries.find((ds) => ds.date === dateStr);
+  return daySummary?.team || "none";
 }
 
 function buildWeeklyRevenueChart(

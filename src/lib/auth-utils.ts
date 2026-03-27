@@ -41,3 +41,7 @@ export async function requireRole(minimumRole: Role) {
 export function canModifyUser(actorRole: Role, targetRole: Role): boolean {
   return ROLE_HIERARCHY[actorRole] >= ROLE_HIERARCHY[targetRole];
 }
+
+export function hasMinRole(userRole: Role, minimumRole: Role): boolean {
+  return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[minimumRole];
+}

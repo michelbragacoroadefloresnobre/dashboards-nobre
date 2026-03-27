@@ -1,15 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import type { OperationResponse } from "@/app/api/operation/types";
 
-export function useDashboardData() {
+export function useDashboardData(date?: string | null) {
   return useQuery<OperationResponse>({
-    queryKey: ["operation"],
+    queryKey: ["operation", date ?? "live"],
     queryFn: async () => {
-      const res = await fetch("/api/operation");
+      const url = date ? `/api/operation?date=${date}` : "/api/operation";
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Falha ao carregar dados do dashboard");
       const json = await res.json();
       return json.data;
     },
-    refetchInterval: 60_000,
+    refetchInterval: date ? false : 60_000,
   });
 }

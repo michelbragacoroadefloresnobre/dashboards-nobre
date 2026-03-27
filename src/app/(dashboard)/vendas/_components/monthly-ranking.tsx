@@ -127,7 +127,7 @@ export function MonthlyRanking({ data, referenceMonth }: MonthlyRankingProps) {
             Vendedor
           </span>
           <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold text-center">
-            LM
+            Lucro M.
           </span>
           <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold text-center">
             Volume
