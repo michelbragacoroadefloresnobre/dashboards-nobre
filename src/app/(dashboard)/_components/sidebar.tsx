@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserMenu } from "./user-menu";
 
 interface SidebarItem {
   id: string;
@@ -76,21 +77,7 @@ export function Sidebar() {
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-border-light">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-bg-card-alt border border-border-light flex items-center justify-center text-xs font-semibold text-text-secondary">
-            AD
-          </div>
-          <div className="min-w-0">
-            <div className="text-[12.5px] font-medium text-text-primary truncate">
-              Admin
-            </div>
-            <div className="text-[11px] text-text-muted truncate">
-              admin@florahub.com
-            </div>
-          </div>
-        </div>
-      </div>
+      <UserMenu />
     </aside>
   );
 }

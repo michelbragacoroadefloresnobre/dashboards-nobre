@@ -1,7 +1,7 @@
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import prisma from "./prisma";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -25,7 +25,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) return null;
 
-        const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
+        const passwordMatch = await bcrypt.compare(
+          password,
+          user.hashedPassword,
+        );
         if (!passwordMatch) return null;
 
         return {
@@ -38,11 +41,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = (user as unknown as { role: string }).role;
+      } else if (trigger === "update") {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { name: true },
+        });
+        if (dbUser) {
+          token.name = dbUser.name;
+        }
       }
+
       return token;
     },
     session({ session, token }) {

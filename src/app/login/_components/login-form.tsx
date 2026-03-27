@@ -1,13 +1,40 @@
 "use client";
 
-import { useActionState } from "react";
-import { login } from "../_actions/login";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
 export function LoginForm() {
-  const [error, formAction, isPending] = useActionState(login, null);
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    startTransition(async () => {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Email ou senha inválidos.");
+        return;
+      }
+
+      router.push("/vendas");
+    });
+  }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
         <label
           htmlFor="email"
