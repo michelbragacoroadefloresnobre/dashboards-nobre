@@ -96,17 +96,6 @@ export const GET = withErrorHandler(
       ),
     ]);
 
-    // Compute global conversion tax for KPIs
-    function computeConversionTax(
-      forms: ExternalForm[],
-      team?: string,
-    ): number {
-      const filtered = team ? forms.filter((f) => f.team === team) : forms;
-      if (filtered.length === 0) return 0;
-      const converted = filtered.filter((f) => f.status === "CONVERTED").length;
-      return converted / filtered.length;
-    }
-
     const conversionTax = computeConversionTax(todayForms, teamOfToday);
     const yesterdayConversionTax = computeConversionTax(yesterdayForms);
 
@@ -142,17 +131,8 @@ export const GET = withErrorHandler(
       yesterdayConversionTax,
     );
 
-    // 5. Sales Race (daily summaries from the 1st of the current month)
-    const monthStartStr = startOfMonth.toFormat("yyyy-MM-dd");
-    const monthDailySummaries = allDailySummaries.filter(
-      (ds) => ds.date >= monthStartStr,
-    );
-    const salesProgress = buildSalesProgress(
-      filterNonCancelled(monthOrders),
-      monthDailySummaries,
-      now,
-      teamOfToday,
-    );
+    // 5. Sales Race (conversion rate per team for the current month)
+    const salesProgress = buildSalesProgress(monthForms);
 
     const weeklyRevenueChart = buildWeeklyRevenueChart(recentDailySummaries);
 
@@ -285,72 +265,32 @@ function buildOperationKpis(
   };
 }
 
+function computeConversionTax(
+  forms: ExternalForm[],
+  team?: string,
+): number {
+  const filtered = team ? forms.filter((f) => f.team === team) : forms;
+  if (filtered.length === 0) return 0;
+  const converted = filtered.filter((f) => f.status === "CONVERTED").length;
+  return converted / filtered.length;
+}
+
 function buildSalesProgress(
-  monthOrders: ExternalOrderSummary[],
-  monthDailySummaries: ExternalDailySummary[],
-  now: DateTime,
-  teamOfToday: string,
+  monthForms: ExternalForm[],
 ): OperationResponse["salesProgress"] {
-  const todayStr = now.toFormat("yyyy-MM-dd");
+  const teamNames = ["tulum", "dubai"] as const;
 
-  // 1. Profit per team from OrderSummaries (start of month to yesterday)
-  const teamProfit = new Map<string, number>();
+  const teams = teamNames
+    .map((name) => ({
+      name,
+      conversionRate: computeConversionTax(monthForms, name),
+    }))
+    .sort((a, b) => b.conversionRate - a.conversionRate);
 
-  for (const order of monthOrders) {
-    const orderDate = DateTime.fromISO(order.createdAt)
-      .setZone(TIMEZONE)
-      .toFormat("yyyy-MM-dd");
-    if (orderDate >= todayStr) continue;
+  const conversionDifference =
+    teams.length >= 2 ? teams[0].conversionRate - teams[1].conversionRate : 0;
 
-    const team = order.team;
-    if (team === "none") continue;
-    if (order.cost == null) continue;
-
-    const profit = parseFloat(order.amount) - parseFloat(order.cost);
-    teamProfit.set(team, (teamProfit.get(team) ?? 0) + profit);
-  }
-
-  // 2. Days worked per team from DailyTeamSummaries (start of month to yesterday)
-  const teamDays = new Map<string, number>();
-
-  for (const ds of monthDailySummaries) {
-    if (ds.date >= todayStr) continue;
-
-    const team = ds.team;
-    if (team === "none") continue;
-
-    teamDays.set(team, (teamDays.get(team) ?? 0) + 1);
-  }
-
-  // 3. Today's profit from DailyTeamSummary
-  let todayProfit = 0;
-  const todaySummary = monthDailySummaries.find(
-    (ds) => ds.date === todayStr && ds.team === teamOfToday,
-  );
-  if (todaySummary && todaySummary.cost != null) {
-    todayProfit =
-      parseFloat(todaySummary.invoice) - parseFloat(todaySummary.cost);
-  }
-
-  // 4. Build average profit per team
-  const allTeams = new Set([...teamProfit.keys(), ...teamDays.keys()]);
-  const teams = Array.from(allTeams).map((name) => {
-    const profit = teamProfit.get(name) ?? 0;
-    const days = teamDays.get(name) ?? 0;
-    const averageProfit = days > 0 ? profit / days : 0;
-    return { name, averageProfit };
-  });
-
-  teams.sort((a, b) => b.averageProfit - a.averageProfit);
-
-  const profitDifference =
-    teams.length >= 2 ? teams[0].averageProfit - teams[1].averageProfit : 0;
-
-  return {
-    teams,
-    todayProfit: { team: teamOfToday, profit: todayProfit },
-    profitDifference,
-  };
+  return { teams, conversionDifference };
 }
 
 function deriveTeamFromSummaries(

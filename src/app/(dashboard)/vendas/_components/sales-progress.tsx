@@ -5,8 +5,11 @@ const TEAM_EMOJIS: Record<string, string> = {
   dubai: "🚀",
 };
 
-function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+function formatPercent(value: number) {
+  return (value * 100).toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }) + "%";
 }
 
 function getDaysInMonth(date: Date) {
@@ -28,7 +31,9 @@ export function SalesProgress({ data }: SalesProgressProps) {
 
   const entries = data.teams.map((team) => {
     const ratio =
-      leader.averageProfit > 0 ? team.averageProfit / leader.averageProfit : 0;
+      leader.conversionRate > 0
+        ? team.conversionRate / leader.conversionRate
+        : 0;
     const width = ratio * monthProgress * 100;
     return { ...team, width: `${Math.max(width, 8)}%` };
   });
@@ -49,7 +54,7 @@ export function SalesProgress({ data }: SalesProgressProps) {
           Progresso de Vendas
         </span>
         <span className="text-[11px] opacity-40 ml-auto">
-          Lucro médio do mês
+          Taxa de conversão do mês
         </span>
       </div>
 
@@ -57,7 +62,7 @@ export function SalesProgress({ data }: SalesProgressProps) {
       <div
         className="flex flex-col gap-3"
         role="list"
-        aria-label="Ranking de lucro por equipe"
+        aria-label="Ranking de conversão por equipe"
       >
         {entries.map((team, i) => {
           const emoji = TEAM_EMOJIS[team.name] ?? "🏁";
@@ -66,7 +71,7 @@ export function SalesProgress({ data }: SalesProgressProps) {
               key={team.name}
               position={`${i + 1}º`}
               name={`${emoji} ${team.name}`}
-              value={formatCurrency(team.averageProfit)}
+              value={formatPercent(team.conversionRate)}
               width={team.width}
               gold={i === 0}
             />
@@ -74,22 +79,11 @@ export function SalesProgress({ data }: SalesProgressProps) {
         })}
       </div>
 
-      {/* Footer: difference + today's profit */}
-      <div className="flex items-center justify-between mt-4 bg-white/6 border border-white/8 rounded-xl px-4 py-3">
+      {/* Footer: difference */}
+      <div className="flex items-center justify-center mt-4 bg-white/6 border border-white/8 rounded-xl px-4 py-3">
         <span className="text-sm font-medium opacity-60">
-          ↕ {formatCurrency(data.profitDifference)} de diferença
+          ↕ {formatPercent(data.conversionDifference)} de diferença
         </span>
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs uppercase tracking-widest opacity-40 font-semibold">
-            Hoje
-          </span>
-          <span
-            className="text-base font-bold text-accent-gold"
-            aria-label={`Lucro parcial de hoje: ${formatCurrency(data.todayProfit.profit)}`}
-          >
-            {formatCurrency(data.todayProfit.profit)}
-          </span>
-        </div>
       </div>
     </section>
   );

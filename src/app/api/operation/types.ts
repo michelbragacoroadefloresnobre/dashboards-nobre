@@ -101,9 +101,8 @@ export interface OperationResponse {
     repasseChange: number | null;
   };
   salesProgress: {
-    teams: Array<{ name: string; averageProfit: number }>;
-    todayProfit: { team: string; profit: number };
-    profitDifference: number;
+    teams: Array<{ name: string; conversionRate: number }>;
+    conversionDifference: number;
   };
   weeklyRevenueChart: Array<{
     date: string;
