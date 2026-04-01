@@ -1,15 +1,17 @@
 import type { OperationResponse } from "@/app/api/operation/types";
 
 const TEAM_EMOJIS: Record<string, string> = {
-  tulum: "🏁",
-  dubai: "🚀",
+  tulum: "☀️",
+  dubai: "🦅",
 };
 
 function formatPercent(value: number) {
-  return (value * 100).toLocaleString("pt-BR", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  }) + "%";
+  return (
+    (value * 100).toLocaleString("pt-BR", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }) + "%"
+  );
 }
 
 function getDaysInMonth(date: Date) {

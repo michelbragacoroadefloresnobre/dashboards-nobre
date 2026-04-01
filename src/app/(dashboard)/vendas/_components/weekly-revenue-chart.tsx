@@ -14,14 +14,14 @@ import {
 } from "recharts";
 
 const TEAM_COLORS: Record<string, string> = {
-  tulum: "#EF4444",
+  tulum: "#c8963e",
   dubai: "#3B82F6",
 };
 const DEFAULT_COLOR = "#3B82F6";
 
 const TEAM_EMOJIS: Record<string, string> = {
-  tulum: "🏁",
-  dubai: "🚀",
+  tulum: "☀️",
+  dubai: "🦅",
 };
 
 function formatCurrency(value: number) {
@@ -73,10 +73,7 @@ export function WeeklyRevenueChart({ data }: WeeklyRevenueChartProps) {
   }, []);
 
   // Build chart data: each date gets a row with tulum/dubai as separate fields
-  const dateMap = new Map<
-    string,
-    { tulum?: number; dubai?: number }
-  >();
+  const dateMap = new Map<string, { tulum?: number; dubai?: number }>();
   for (const d of data) {
     if (!dateMap.has(d.date)) {
       dateMap.set(d.date, {});
@@ -85,9 +82,10 @@ export function WeeklyRevenueChart({ data }: WeeklyRevenueChartProps) {
     if (d.team === "tulum") entry.tulum = d.invoice;
     if (d.team === "dubai") entry.dubai = d.invoice;
   }
-  const chartData = Array.from(dateMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, values]) => ({ date, ...values }));
+  const chartData = Array.from(dateMap.entries()).map(([date, values]) => ({
+    date,
+    ...values,
+  }));
 
   // Reference line: last entry = today's team
   const lastEntry = data[data.length - 1];
@@ -138,11 +136,7 @@ export function WeeklyRevenueChart({ data }: WeeklyRevenueChartProps) {
                       x2="0"
                       y2="1"
                     >
-                      <stop
-                        offset="0%"
-                        stopColor={color}
-                        stopOpacity={0.25}
-                      />
+                      <stop offset="0%" stopColor={color} stopOpacity={0.25} />
                       <stop
                         offset="100%"
                         stopColor={color}

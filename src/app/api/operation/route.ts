@@ -265,10 +265,7 @@ function buildOperationKpis(
   };
 }
 
-function computeConversionTax(
-  forms: ExternalForm[],
-  team?: string,
-): number {
+function computeConversionTax(forms: ExternalForm[], team?: string): number {
   const filtered = team ? forms.filter((f) => f.team === team) : forms;
   if (filtered.length === 0) return 0;
   const converted = filtered.filter((f) => f.status === "CONVERTED").length;
