@@ -83,6 +83,8 @@ export function buildMonthlyRanking(
       fat: number;
       cost: number;
       orders: number;
+      pastFat: number;
+      pastCost: number;
       daysWorked: Set<string>;
     }
   >();
@@ -92,19 +94,21 @@ export function buildMonthlyRanking(
     if (order.seller.permission !== "comercial") continue;
 
     const orderDate = DateTime.fromISO(order.createdAt).setZone(now.zone);
-    if (orderDate >= midnightToday) continue;
-
     const key = order.seller.id;
-    const entry = sellerMap.get(key);
     const amount = parseFloat(order.amount);
     const cost = order.cost ? parseFloat(order.cost) : 0;
-    const dayKey = orderDate.toISODate()!;
+    const isBeforeToday = orderDate < midnightToday;
 
+    const entry = sellerMap.get(key);
     if (entry) {
       entry.fat += amount;
       entry.cost += cost;
       entry.orders += 1;
-      entry.daysWorked.add(dayKey);
+      if (isBeforeToday) {
+        entry.pastFat += amount;
+        entry.pastCost += cost;
+        entry.daysWorked.add(orderDate.toISODate()!);
+      }
       if (!entry.imageUrl && order.seller.imageUrl) {
         entry.imageUrl = order.seller.imageUrl;
       }
@@ -115,7 +119,11 @@ export function buildMonthlyRanking(
         fat: amount,
         cost,
         orders: 1,
-        daysWorked: new Set([dayKey]),
+        pastFat: isBeforeToday ? amount : 0,
+        pastCost: isBeforeToday ? cost : 0,
+        daysWorked: isBeforeToday
+          ? new Set([orderDate.toISODate()!])
+          : new Set(),
       });
     }
   }
@@ -125,7 +133,10 @@ export function buildMonthlyRanking(
     ...s,
     profit: s.fat - s.cost,
     tm: s.orders > 0 ? s.fat / s.orders : 0,
-    lm: s.daysWorked.size > 0 ? (s.fat - s.cost) / s.daysWorked.size : 0,
+    lm:
+      s.daysWorked.size > 0
+        ? (s.pastFat - s.pastCost) / s.daysWorked.size
+        : 0,
   }));
 
   sellers.sort((a, b) => b.lm - a.lm);
