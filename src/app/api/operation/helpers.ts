@@ -13,21 +13,12 @@ const currencyFormatterWithDigit = new Intl.NumberFormat("pt-BR", {
   maximumFractionDigits: 2,
 });
 
-const percentFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "percent",
-  maximumFractionDigits: 2,
-});
-
 export function formatCurrency(
   value: number,
   withDigit: boolean = false,
 ): string {
   if (withDigit) return currencyFormatterWithDigit.format(value);
   return currencyFormatter.format(value);
-}
-
-export function formatPercent(value: number): string {
-  return percentFormatter.format(value);
 }
 
 export function getInitials(name: string): string {
@@ -158,7 +149,9 @@ export function buildMonthlyRanking(
       name: s.name,
       imageUrl: s.imageUrl,
       orders: s.orders,
-      conversion: conv ? formatPercent(conv.converted / conv.total) : null,
+      conversion: conv
+        ? `${Math.round((conv.converted / conv.total) * 100)}%`
+        : null,
       tm: formatCurrency(s.tm, true),
       lm: formatCurrency(s.lm),
     };
@@ -229,7 +222,9 @@ export function buildDailyRanking(
       name: s.name,
       imageUrl: s.imageUrl,
       orders: s.orders,
-      conversion: conv ? formatPercent(conv.converted / conv.total) : null,
+      conversion: conv
+        ? `${Math.round((conv.converted / conv.total) * 100)}%`
+        : null,
       tm: formatCurrency(s.tm, true),
       gap,
     };
