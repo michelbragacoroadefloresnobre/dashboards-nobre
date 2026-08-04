@@ -33,7 +33,7 @@ Resumos individuais de cada pedido. Cada pedido gera um `OrderSummary` com valor
         "amount": "150.00",
         "cost": "80.00" | null,
         "orderId": "uuid",
-        "team": "tulum" | "dubai" | "none",
+        "team": "SIENA" | "YORK" | "NONE",
         "status": "PRODUCING" | "FINISHED" | "CANCELLED",
         "createdAt": "2026-03-16T12:00:00.000Z",
         "product": {
@@ -45,7 +45,7 @@ Resumos individuais de cada pedido. Cada pedido gera um `OrderSummary` com valor
           "id": "uuid",
           "name": "Nome do Vendedor",
           "email": "email@exemplo.com",
-          "team": "tulum" | "dubai" | "none",
+          "team": "SIENA" | "YORK" | "NONE",
           "shift": "MORNING" | "NIGHT",
           "imageUrl": "https://..." | null,
           "permission": "comercial" | "supervisor",
@@ -59,7 +59,7 @@ Resumos individuais de cada pedido. Cada pedido gera um `OrderSummary` com valor
 ### Tipos relevantes
 
 - `status`: `"PRODUCING"` (em produção/aguardando), `"FINISHED"` (finalizado), `"CANCELLED"` (cancelado)
-- `team`: `"tulum"`, `"dubai"` ou `"none"`
+- `team`: `"SIENA"`, `"YORK"` ou `"NONE"`
 - `product` e `seller` podem ser `undefined` (ex: pedidos WooCommerce sem vendedor atribuído)
 - `amount` e `cost` são strings decimais (DECIMAL do banco)
 
@@ -86,7 +86,7 @@ Resumos agregados por dia. Cada registro representa a operação de um dia intei
         "invoice": "5000.00",
         "cost": "2500.00",
         "orderTotal": 25,
-        "team": "tulum" | "dubai" | "none",
+        "team": "SIENA" | "YORK" | "NONE",
         "passthroughRate": "0.5000" | null
       }
     ]
@@ -117,14 +117,14 @@ Nenhum.
 ```json
 {
   "data": {
-    "team": "tulum" | "dubai" | "none"
+    "team": "SIENA" | "YORK" | "NONE"
   }
 }
 ```
 
 ### Lógica
 
-- Compara vendedores ativos (`ativos:tulum` vs `ativos:dubai` no Redis)
+- Compara vendedores ativos (`ativos:SIENA` vs `ativos:YORK` no Redis)
 - Retorna o time com mais vendedores ativos
 - Em caso de empate ou nenhum ativo, fallback para lógica interna do serviço
 
@@ -149,12 +149,12 @@ Lista todos os formulários (OrderRequest) no período, com o vendedor associado
     {
       "id": "uuid",
       "status": "NOT_CONVERTED" | "CANCELLED" | "CONVERTED",
-      "team": "tulum" | "dubai" | "none" | null,
+      "team": "SIENA" | "YORK" | "NONE" | null,
       "seller": {
         "id": "uuid",
         "name": "Nome do Vendedor",
         "email": "email@exemplo.com",
-        "team": "tulum" | "dubai" | "none",
+        "team": "SIENA" | "YORK" | "NONE",
         "shift": "MORNING" | "NIGHT",
         "imageUrl": "https://..." | null,
         "permission": "comercial" | "supervisor",
@@ -193,7 +193,7 @@ Retorna as **6 maiores vendas do mês com valor acima de R$1.500**, ordenadas po
       "amount": "850.00",
       "cost": "400.00" | null,
       "orderId": "uuid",
-      "team": "tulum" | "dubai" | "none",
+      "team": "SIENA" | "YORK" | "NONE",
       "status": "PRODUCING" | "FINISHED",
       "createdAt": "2026-03-16T12:00:00.000Z",
       "product": {
@@ -205,7 +205,7 @@ Retorna as **6 maiores vendas do mês com valor acima de R$1.500**, ordenadas po
         "id": "uuid",
         "name": "Nome do Vendedor",
         "email": "email@exemplo.com",
-        "team": "tulum" | "dubai" | "none",
+        "team": "SIENA" | "YORK" | "NONE",
         "shift": "MORNING" | "NIGHT",
         "imageUrl": "https://..." | null,
         "permission": "comercial" | "supervisor",
@@ -286,9 +286,9 @@ enum OrderSummaryStatus {
 }
 
 enum PedidoTime {
-  TULUM = "tulum",
-  DUBAI = "dubai",
-  NONE = "none",
+  SIENA = "SIENA",
+  YORK = "YORK",
+  NONE = "NONE",
 }
 
 enum OrderRequestStatus {

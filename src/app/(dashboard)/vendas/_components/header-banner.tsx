@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import type { OperationResponse } from "@/app/api/operation/types";
+import { teamLabel } from "@/lib/teams";
 
 interface HeaderBannerProps {
   data: OperationResponse["headerBanner"];
@@ -74,7 +75,7 @@ export function HeaderBanner({
               {highestRevenue.value}
             </div>
             <div className="text-[11px] opacity-50 mt-px">
-              {highestRevenue.date} · {highestRevenue.team}
+              {highestRevenue.date} · {teamLabel(highestRevenue.team)}
             </div>
           </div>
         </div>
@@ -90,7 +91,7 @@ export function HeaderBanner({
               {highestOrders.value} pedidos
             </div>
             <div className="text-[11px] opacity-50 mt-px">
-              {highestOrders.date} · {highestOrders.team}
+              {highestOrders.date} · {teamLabel(highestOrders.team)}
             </div>
           </div>
         </div>
@@ -136,14 +137,12 @@ export function HeaderBanner({
           {selectedDate ? (
             <>
               <span className="inline-block size-1.75 bg-amber-400 rounded-full" />
-              &ensp;Revisando · {today.date} ·{" "}
-              <span className="capitalize">{today.team}</span>
+              &ensp;Revisando · {today.date} · {teamLabel(today.team)}
             </>
           ) : (
             <>
               <span className="inline-block size-1.75 bg-[#4ADE80] rounded-full animate-pulse-dot" />
-              &ensp;Ao vivo · {today.date} ·{" "}
-              <span className="capitalize">{today.team}</span>
+              &ensp;Ao vivo · {today.date} · {teamLabel(today.team)}
             </>
           )}
         </div>

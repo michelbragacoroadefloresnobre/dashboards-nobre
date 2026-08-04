@@ -29,9 +29,9 @@ Recordes históricos + informações do dia.
 
 ```ts
 {
-  highestRevenue: { value: string; date: string; team: string }  // "R$ 80.699,33", "27/02/2026", "dubai"
-  highestOrders: { value: number; date: string; team: string }   // 174, "27/02/2026", "dubai"
-  today: { date: string; team: string }                          // "17/03/2026", "tulum"
+  highestRevenue: { value: string; date: string; team: string }  // "R$ 80.699,33", "27/02/2026", "YORK"
+  highestOrders: { value: number; date: string; team: string }   // 174, "27/02/2026", "YORK"
+  today: { date: string; team: string }                          // "17/03/2026", "SIENA"
 }
 ```
 
@@ -119,7 +119,7 @@ Corrida de vendas entre times.
 ```ts
 {
   teams: Array<{
-    name: string            // "tulum" ou "dubai"
+    name: string            // "SIENA" ou "YORK"
     averageProfit: number   // lucro médio diário (invoice - cost) / dias
   }>
   todayProfit: {
@@ -145,7 +145,7 @@ Faturamento dos últimos 7 dias, filtrado pelo time de hoje.
 ```ts
 Array<{
   date: string     // "10/03"
-  team: string     // "tulum"
+  team: string     // "SIENA"
   invoice: number  // 4560.00
 }>
 ```

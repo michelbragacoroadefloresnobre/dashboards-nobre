@@ -1,9 +1,5 @@
 import type { OperationResponse } from "@/app/api/operation/types";
-
-const TEAM_EMOJIS: Record<string, string> = {
-  tulum: "☀️",
-  dubai: "🦅",
-};
+import { TEAM_EMOJIS, teamLabel } from "@/lib/teams";
 
 function formatPercent(value: number) {
   return (
@@ -72,7 +68,7 @@ export function SalesProgress({ data }: SalesProgressProps) {
             <RaceEntry
               key={team.name}
               position={`${i + 1}º`}
-              name={`${emoji} ${team.name}`}
+              name={`${emoji} ${teamLabel(team.name)}`}
               value={formatPercent(team.conversionRate)}
               width={team.width}
               gold={i === 0}

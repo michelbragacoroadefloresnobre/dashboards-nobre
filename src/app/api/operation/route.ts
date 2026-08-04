@@ -1,5 +1,6 @@
 import { withAuth, withErrorHandler } from "@/lib/api-handler";
 import { hasMinRole } from "@/lib/auth-utils";
+import { TEAMS } from "@/lib/teams";
 import { DateTime } from "luxon";
 import {
   buildDailyRanking,
@@ -275,14 +276,10 @@ function computeConversionTax(forms: ExternalForm[], team?: string): number {
 function buildSalesProgress(
   monthForms: ExternalForm[],
 ): OperationResponse["salesProgress"] {
-  const teamNames = ["tulum", "dubai"] as const;
-
-  const teams = teamNames
-    .map((name) => ({
-      name,
-      conversionRate: computeConversionTax(monthForms, name),
-    }))
-    .sort((a, b) => b.conversionRate - a.conversionRate);
+  const teams = TEAMS.map((name) => ({
+    name,
+    conversionRate: computeConversionTax(monthForms, name),
+  })).sort((a, b) => b.conversionRate - a.conversionRate);
 
   const conversionDifference =
     teams.length >= 2 ? teams[0].conversionRate - teams[1].conversionRate : 0;
@@ -295,7 +292,7 @@ function deriveTeamFromSummaries(
   dateStr: string,
 ): string {
   const daySummary = summaries.find((ds) => ds.date === dateStr);
-  return daySummary?.team || "none";
+  return daySummary?.team || "NONE";
 }
 
 function buildWeeklyRevenueChart(

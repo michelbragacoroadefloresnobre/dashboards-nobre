@@ -7,7 +7,7 @@ export interface ExternalOrderSummary {
   amount: string; // decimal string e.g. "150.00"
   cost: string | null;
   orderId: string;
-  team: "tulum" | "dubai" | "none";
+  team: "SIENA" | "YORK" | "NONE";
   status: "PRODUCING" | "FINISHED" | "CANCELLED";
   createdAt: string;
   product?: {
@@ -19,7 +19,7 @@ export interface ExternalOrderSummary {
     id: string;
     name: string;
     email: string;
-    team: "tulum" | "dubai" | "none";
+    team: "SIENA" | "YORK" | "NONE";
     shift: "MORNING" | "NIGHT";
     imageUrl: string | null;
     permission: "comercial" | "supervisor";
@@ -32,12 +32,12 @@ export interface ExternalDailySummary {
   invoice: string; // decimal string
   cost: string | null;
   orderTotal: number;
-  team: "tulum" | "dubai" | "none";
+  team: "SIENA" | "YORK" | "NONE";
   passthroughRate: string | null; // decimal string (0–1), e.g. "0.4500"
 }
 
 export interface ExternalTeamOfToday {
-  team: "tulum" | "dubai" | "none";
+  team: "SIENA" | "YORK" | "NONE";
 }
 
 export interface ExternalConversionTax {
@@ -47,12 +47,12 @@ export interface ExternalConversionTax {
 export interface ExternalForm {
   id: string;
   status: "NOT_CONVERTED" | "CANCELLED" | "CONVERTED";
-  team: "tulum" | "dubai" | "none" | null;
+  team: "SIENA" | "YORK" | "NONE" | null;
   seller?: {
     id: string;
     name: string;
     email: string;
-    team: "tulum" | "dubai" | "none";
+    team: "SIENA" | "YORK" | "NONE";
     shift: "MORNING" | "NIGHT";
     imageUrl: string | null;
     permission: "comercial" | "supervisor";

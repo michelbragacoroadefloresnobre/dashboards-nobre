@@ -1,6 +1,7 @@
 "use client";
 
 import type { OperationResponse } from "@/app/api/operation/types";
+import { TEAM_COLORS, TEAM_EMOJIS, TEAMS, teamLabel } from "@/lib/teams";
 import { useEffect, useState } from "react";
 import {
   Area,
@@ -13,22 +14,11 @@ import {
   YAxis,
 } from "recharts";
 
-const TEAM_COLORS: Record<string, string> = {
-  tulum: "#c8963e",
-  dubai: "#3B82F6",
-};
 const DEFAULT_COLOR = "#3B82F6";
-
-const TEAM_EMOJIS: Record<string, string> = {
-  tulum: "☀️",
-  dubai: "🦅",
-};
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
-
-const TEAMS = ["tulum", "dubai"] as const;
 
 function CustomTooltip({
   active,
@@ -53,8 +43,7 @@ function CustomTooltip({
           className="text-[12px] font-semibold"
           style={{ color: entry.color }}
         >
-          {TEAM_EMOJIS[entry.name] ?? ""}{" "}
-          {entry.name.charAt(0).toUpperCase() + entry.name.slice(1)}:{" "}
+          {TEAM_EMOJIS[entry.name] ?? ""} {teamLabel(entry.name)}:{" "}
           {formatCurrency(entry.value!)}
         </p>
       ))}
@@ -72,15 +61,15 @@ export function WeeklyRevenueChart({ data }: WeeklyRevenueChartProps) {
     requestAnimationFrame(() => setMounted(true));
   }, []);
 
-  // Build chart data: each date gets a row with tulum/dubai as separate fields
-  const dateMap = new Map<string, { tulum?: number; dubai?: number }>();
+  // Build chart data: each date gets a row with SIENA/YORK as separate fields
+  const dateMap = new Map<string, { SIENA?: number; YORK?: number }>();
   for (const d of data) {
     if (!dateMap.has(d.date)) {
       dateMap.set(d.date, {});
     }
     const entry = dateMap.get(d.date)!;
-    if (d.team === "tulum") entry.tulum = d.invoice;
-    if (d.team === "dubai") entry.dubai = d.invoice;
+    if (d.team === "SIENA") entry.SIENA = d.invoice;
+    if (d.team === "YORK") entry.YORK = d.invoice;
   }
   const chartData = Array.from(dateMap.entries()).map(([date, values]) => ({
     date,
@@ -114,7 +103,7 @@ export function WeeklyRevenueChart({ data }: WeeklyRevenueChartProps) {
                     boxShadow: `0 0 6px ${color}`,
                   }}
                 />{" "}
-                {emoji} {team.charAt(0).toUpperCase() + team.slice(1)}
+                {emoji} {teamLabel(team)}
               </span>
             );
           })}
@@ -183,44 +172,44 @@ export function WeeklyRevenueChart({ data }: WeeklyRevenueChartProps) {
               )}
               <Area
                 type="monotone"
-                dataKey="tulum"
-                name="tulum"
+                dataKey="SIENA"
+                name="SIENA"
                 connectNulls
-                stroke={TEAM_COLORS.tulum}
+                stroke={TEAM_COLORS.SIENA}
                 strokeWidth={3}
-                fill="url(#fill-tulum)"
+                fill="url(#fill-SIENA)"
                 filter="url(#glow-main)"
                 dot={{
                   r: 4,
-                  fill: TEAM_COLORS.tulum,
+                  fill: TEAM_COLORS.SIENA,
                   stroke: "rgba(255,255,255,0.3)",
                   strokeWidth: 1.5,
                 }}
                 activeDot={{
                   r: 6,
-                  fill: TEAM_COLORS.tulum,
+                  fill: TEAM_COLORS.SIENA,
                   stroke: "#fff",
                   strokeWidth: 2,
                 }}
               />
               <Area
                 type="monotone"
-                dataKey="dubai"
-                name="dubai"
+                dataKey="YORK"
+                name="YORK"
                 connectNulls
-                stroke={TEAM_COLORS.dubai}
+                stroke={TEAM_COLORS.YORK}
                 strokeWidth={3}
-                fill="url(#fill-dubai)"
+                fill="url(#fill-YORK)"
                 filter="url(#glow-main)"
                 dot={{
                   r: 4,
-                  fill: TEAM_COLORS.dubai,
+                  fill: TEAM_COLORS.YORK,
                   stroke: "rgba(255,255,255,0.3)",
                   strokeWidth: 1.5,
                 }}
                 activeDot={{
                   r: 6,
-                  fill: TEAM_COLORS.dubai,
+                  fill: TEAM_COLORS.YORK,
                   stroke: "#fff",
                   strokeWidth: 2,
                 }}

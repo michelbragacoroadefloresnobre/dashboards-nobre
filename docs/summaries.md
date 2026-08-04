@@ -24,7 +24,7 @@ Representa o resumo financeiro de um **pedido individual**.
 | `cost`      | DECIMAL | Custo do pedido                                 |
 | `sellerId`  | UUID    | Vendedor responsável                            |
 | `orderId`   | UUID    | Pedido de origem (`pedido`)                     |
-| `team`      | STRING  | Time que processou (`tulum`, `dubai` ou `none`) |
+| `team`      | STRING  | Time que processou (`SIENA`, `YORK` ou `NONE`) |
 | `productId` | UUID    | Produto principal                               |
 | `status`    | STRING  | `PRODUCING`, `FINISHED` ou `CANCELLED`          |
 | `createdAt` | DATE    | Data/hora de criação                            |
@@ -53,11 +53,11 @@ Agrega os `OrderSummary` de um dia em um **resumo diário por time**.
 | `invoice`    | DECIMAL  | Faturamento total do dia                               |
 | `cost`       | DECIMAL  | Custo total do dia                                     |
 | `orderTotal` | INTEGER  | Quantidade de pedidos do time no dia                   |
-| `team`       | STRING   | Time que trabalhou no dia (`tulum`, `dubai` ou `none`) |
+| `team`       | STRING   | Time que trabalhou no dia (`SIENA`, `YORK` ou `NONE`) |
 
 ### Detecção do time do dia
 
-O time é detectado **dinamicamente** a partir dos pedidos — não há escala fixa no sistema. O código busca o primeiro pedido criado após as 9h que pertença a Tulum ou Dubai. Se nenhum for encontrado, o time fica `none`.
+O time é detectado **dinamicamente** a partir dos pedidos — não há escala fixa no sistema. O código busca o primeiro pedido criado após as 9h que pertença a Siena ou York. Se nenhum for encontrado, o time fica `NONE`.
 
 Isso significa que o código funciona normalmente mesmo quando um time faz plantão em dias consecutivos (ex: 3 dias seguidos).
 
