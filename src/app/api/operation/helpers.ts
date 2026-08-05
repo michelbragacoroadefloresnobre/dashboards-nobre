@@ -68,13 +68,38 @@ function buildConversionMap(
   return map;
 }
 
+type SellerShift = NonNullable<ExternalOrderSummary["seller"]>["shift"];
+
+// The night shift runs 19h -> 7h, so it crosses midnight. Its orders must be
+// attributed to the day the shift started, otherwise one shift counts as two
+// days worked and halves the seller's average profit.
+//
+// The cutoff carries a 2h margin over the 7h shift end, covering sellers who
+// leave late. Early arrivals need no margin: an order placed before midnight
+// already falls on the day the shift started. Only NIGHT sellers are adjusted —
+// applying this to MORNING sellers would push their early arrivals (from 7h,
+// or earlier with margin) back to the previous day.
+const NIGHT_SHIFT_CUTOFF_HOUR = 9;
+
+function shiftDay(moment: DateTime, shift: SellerShift): string {
+  const isNightTail =
+    shift === "NIGHT" && moment.hour < NIGHT_SHIFT_CUTOFF_HOUR;
+  return (isNightTail ? moment.minus({ days: 1 }) : moment).toISODate()!;
+}
+
 export function buildMonthlyRanking(
   orders: ExternalOrderSummary[],
   forms: ExternalForm[],
   now: DateTime,
 ) {
   const conversionMap = buildConversionMap(forms);
-  const midnightToday = now.startOf("day");
+  // The in-progress shift is excluded from the average, so "today" must also be
+  // read as a shift day — for a night seller at 02h, the current shift is still
+  // the one that started yesterday.
+  const currentShiftDay: Record<SellerShift, string> = {
+    MORNING: shiftDay(now, "MORNING"),
+    NIGHT: shiftDay(now, "NIGHT"),
+  };
   const sellerMap = new Map<
     string,
     {
@@ -94,10 +119,11 @@ export function buildMonthlyRanking(
     if (order.seller.permission !== "comercial") continue;
 
     const orderDate = DateTime.fromISO(order.createdAt).setZone(now.zone);
+    const orderShiftDay = shiftDay(orderDate, order.seller.shift);
     const key = order.seller.id;
     const amount = parseFloat(order.amount);
     const cost = order.cost ? parseFloat(order.cost) : 0;
-    const isBeforeToday = orderDate < midnightToday;
+    const isBeforeToday = orderShiftDay < currentShiftDay[order.seller.shift];
 
     const entry = sellerMap.get(key);
     if (entry) {
@@ -107,7 +133,7 @@ export function buildMonthlyRanking(
       if (isBeforeToday) {
         entry.pastFat += amount;
         entry.pastCost += cost;
-        entry.daysWorked.add(orderDate.toISODate()!);
+        entry.daysWorked.add(orderShiftDay);
       }
       if (!entry.imageUrl && order.seller.imageUrl) {
         entry.imageUrl = order.seller.imageUrl;
@@ -121,9 +147,7 @@ export function buildMonthlyRanking(
         orders: 1,
         pastFat: isBeforeToday ? amount : 0,
         pastCost: isBeforeToday ? cost : 0,
-        daysWorked: isBeforeToday
-          ? new Set([orderDate.toISODate()!])
-          : new Set(),
+        daysWorked: isBeforeToday ? new Set([orderShiftDay]) : new Set(),
       });
     }
   }
@@ -134,9 +158,7 @@ export function buildMonthlyRanking(
     profit: s.fat - s.cost,
     tm: s.orders > 0 ? s.fat / s.orders : 0,
     lm:
-      s.daysWorked.size > 0
-        ? (s.pastFat - s.pastCost) / s.daysWorked.size
-        : 0,
+      s.daysWorked.size > 0 ? (s.pastFat - s.pastCost) / s.daysWorked.size : 0,
   }));
 
   sellers.sort((a, b) => b.lm - a.lm);
