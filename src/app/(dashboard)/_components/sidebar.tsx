@@ -10,6 +10,8 @@ interface SidebarItem {
   href: string;
   label: string;
   icon: string;
+  /** Shown only to ADMIN and SUPER_ADMIN; the page itself also enforces the role. */
+  adminOnly?: boolean;
 }
 
 const dashboards: SidebarItem[] = [
@@ -17,10 +19,18 @@ const dashboards: SidebarItem[] = [
   { id: "financeiro", href: "/financeiro", label: "Financeiro", icon: "💰" },
   { id: "estoque", href: "/estoque", label: "Estoque", icon: "📦" },
   { id: "marketing", href: "/marketing", label: "Marketing", icon: "📣" },
+  {
+    id: "julia",
+    href: "/julia",
+    label: "Relatório da Julia",
+    icon: "🤖",
+    adminOnly: true,
+  },
 ];
 
-export function Sidebar() {
+export function Sidebar({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
+  const items = dashboards.filter((item) => !item.adminOnly || isAdmin);
 
   return (
     <aside className="w-[256px] h-full bg-white border-r border-border flex flex-col shrink-0">
@@ -51,7 +61,7 @@ export function Sidebar() {
           Dashboards
         </div>
         <nav className="flex flex-col gap-1">
-          {dashboards.map((item) => {
+          {items.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link

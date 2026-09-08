@@ -35,6 +35,17 @@
   --color-border: #e8e6e1;
   --color-border-light: #f0eeea;
 
+  /* Relatório da Julia: cores fixas por identidade de agente (skill
+     dashboard-api) e da composição do cache de prompt, validadas juntas
+     para daltonismo sobre o fundo dos cards. */
+  --color-julia-turn: #9c7c0b;
+  --color-julia-followup: #2171cc;
+  --color-julia-local: #d35f00;
+  --color-julia-media: #8254c4;
+  --color-cache-read: #1a8d5c;
+  --color-cache-write: #5b5fc7;
+  --color-cache-none: #c0392b;
+
   --font-display: "Inter", sans-serif;
   --font-body: "Inter", sans-serif;
   --font-family-body: "Inter", sans-serif;

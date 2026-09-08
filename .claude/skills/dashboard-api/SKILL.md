@@ -1,6 +1,6 @@
 ---
 name: dashboard-api
-description: Documentação das rotas da API do dashboard corporativo de operações — order-summaries, daily-summaries, sellers, team-of-today, forms e top-sales. Inclui eventos Pusher para atualizações em tempo real. Use ao implementar telas do dashboard que consomem essas rotas.
+description: Documentação das rotas públicas da API de dashboards (/api/v1/dashboard) — operação (order-summaries, daily-summaries, sellers, team-of-today, forms e top-sales) e custos da Julia (julia/model-usage). Inclui eventos Pusher para atualizações em tempo real. Use ao implementar telas do dashboard (FloraHub) que consomem essas rotas.
 user-invocable: true
 ---
 
@@ -132,7 +132,7 @@ Nenhum.
 
 ## 4. GET `/api/v1/dashboard/operation/forms`
 
-Lista todos os formulários (OrderRequest) no período, com o vendedor associado.
+Lista todos os formulários (Form) no período, com o vendedor associado.
 
 ### Query Params
 
@@ -179,8 +179,8 @@ Retorna as **6 maiores vendas do mês com valor acima de R$1.500**, ordenadas po
 
 ### Query Params
 
-| Param  | Tipo   | Obrigatório | Descrição                                                                                                                               |
-| ------ | ------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Param  | Tipo   | Obrigatório | Descrição                                                                                                                                  |
+| ------ | ------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `date` | string | Não         | Data de referência no formato `YYYY-MM-DD`. Busca do dia 1 do mês dessa data até o final desse dia. Quando omitido, usa a data de hoje. |
 
 ### Resposta
@@ -291,9 +291,140 @@ enum PedidoTime {
   NONE = "NONE",
 }
 
-enum OrderRequestStatus {
+enum FormStatus {
   NOT_CONVERTED = "NOT_CONVERTED",
   CANCELLED = "CANCELLED",
   CONVERTED = "CONVERTED",
 }
 ```
+
+---
+
+# API de Custos da Julia
+
+Base URL: `/api/v1/dashboard/julia`
+
+Rota pública (`public: true`), resposta no formato `{ data: ... }`, CORS liberado para qualquer origem como todo `/api/*`. Agrega a tabela `nobre_julia_model_usage`, onde cada linha é uma tentativa HTTP de chamada de modelo da Julia ou de um sub-agente. Como o registro nasce e o que cada medida significa: [uso-e-custo.md](../julia-agent/references/uso-e-custo.md) da skill `julia-agent`.
+
+## 6. GET `/api/v1/dashboard/julia/model-usage`
+
+Consumo de modelo no período: totais, por agente, série temporal, por agente × tarefa × modelo e erros por tipo.
+
+### Query Params
+
+| Param    | Tipo              | Obrigatório | Descrição                                                                                                                                  |
+| -------- | ----------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `start`  | string            | Sim         | Início do período (inclusivo). ISO 8601 com fuso, ex.: `2026-09-01T03:00:00.000Z`.                                                         |
+| `end`    | string            | Sim         | Fim do período (exclusivo). Precisa ser maior que `start` e no máximo 92 dias depois.                                                      |
+| `agents` | string            | Não         | Ids de agente separados por vírgula (`julia_turn,julia_media`). Omitido = todos. Id desconhecido responde 400.                             |
+| `bucket` | `"hour"` \| `"day"` | Não       | Granularidade da série. Padrão: `hour` até 3 dias de período, `day` acima. `hour` explícito vale até 14 dias; acima disso vira `day`.      |
+
+Erro de validação responde `400` com `{ "error": "...", "status": 400 }`.
+
+### Resposta
+
+```json
+{
+  "data": {
+    "range": {
+      "start": "2026-09-01T03:00:00.000Z",
+      "end": "2026-09-08T03:00:00.000Z",
+      "bucket": "hour" | "day",
+      "timezone": "America/Sao_Paulo",
+      "buckets": ["2026-09-01T00:00", "2026-09-02T00:00"]
+    },
+    "firstRecordedAt": "2026-09-04T18:21:07.512Z" | null,
+    "totals": { ...UsageMeasures, ...UsageLatency },
+    "byAgent": [
+      { "agent": "julia_turn", ...UsageMeasures, ...UsageLatency }
+    ],
+    "series": [
+      { "bucket": "2026-09-01T00:00", "agent": "julia_turn", ...UsageMeasures }
+    ],
+    "byModel": [
+      {
+        "agent": "julia_turn",
+        "task": "active" | null,
+        "model": "google/gemini-3.8-flash",
+        "providers": "vertex" | "google, vertex" | null,
+        ...UsageMeasures,
+        ...UsageLatency
+      }
+    ],
+    "errors": [
+      {
+        "agent": "julia_turn",
+        "errorKind": "rate_limit",
+        "errorStatusCode": 429 | null,
+        "count": 3,
+        "lastAt": "2026-09-04T18:21:07.512Z",
+        "lastMessage": "Resource exhausted" | null
+      }
+    ]
+  }
+}
+```
+
+### `UsageMeasures`
+
+| Campo               | Tipo   | Descrição                                                                                                                         |
+| ------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `requests`          | number | Tentativas HTTP ao AI Gateway. Cada step de tool-call e cada retry do SDK conta uma — mesma contagem do dashboard do gateway.     |
+| `errors`            | number | Tentativas que terminaram em erro.                                                                                                |
+| `executions`        | number | Chamadas distintas de `generateText`/`generateObject`; uma execução pode ter várias tentativas.                                   |
+| `failedExecutions`  | number | Execuções cuja última tentativa falhou.                                                                                           |
+| `costUsd`           | number | Custo cobrado pelo gateway, em USD. Hoje o Gemini é cobrado a US$ 0 nesta conta, então fica zerado.                               |
+| `marketCostUsd`     | number | Preço de tabela do modelo, em USD — o número que reflete consumo enquanto `costUsd` for zero.                                     |
+| `inputTokens`       | number | Tokens de entrada, **cache incluso**.                                                                                             |
+| `cachedInputTokens` | number | Parte da entrada lida do cache de prompt.                                                                                         |
+| `cacheWriteTokens`  | number | Parte da entrada gravada no cache (só provedores que reportam gravação, como Anthropic; Gemini reporta só leitura).               |
+| `outputTokens`      | number | Tokens de saída, raciocínio incluso.                                                                                              |
+| `reasoningTokens`   | number | Parte da saída gasta em raciocínio.                                                                                               |
+
+### `UsageLatency`
+
+`p50DurationMs` e `p95DurationMs` (`number | null`): percentis da duração das tentativas **com sucesso**, em milissegundos. `null` quando não há sucesso no grupo.
+
+### Notas
+
+- Métricas derivadas, calculadas no dashboard: taxa de erro = `errors / requests`; entrada sem cache = `inputTokens − cachedInputTokens − cacheWriteTokens`; taxa de cache = `cachedInputTokens / inputTokens`.
+- `range.buckets` traz **todas** as chaves do período, inclusive as vazias, no fuso `America/Sao_Paulo` e no formato `YYYY-MM-DDTHH:mm` sem offset. `series` traz só bucket × agente com dados: para desenhar as linhas, preencher o resto com `0` (e `null` em taxas).
+- `byAgent` e `series` só listam agentes com registro no período; `byAgent` vem na ordem canônica (`julia_turn`, `julia_followup`, `julia_local`, `julia_media`).
+- `byModel` agrupa por agente × tarefa × modelo, ordenado por agente e depois por `requests` decrescente; `providers` é a lista dos provedores finais escolhidos pelo gateway no período.
+- `errors` agrupa por agente × `errorKind` × `errorStatusCode`, ordenado por `count` decrescente, no máximo 50 linhas; `lastMessage` é a mensagem da ocorrência mais recente, truncada em 500 caracteres.
+- `firstRecordedAt` é a primeira linha da tabela inteira, não do período — serve para avisar que não existe dado anterior ao deploy do registro.
+- Sem cache HTTP (`revalidate = 0`); o dashboard atual refaz a consulta a cada 60 s nos presets.
+
+### Enums e rótulos (pt-BR)
+
+| `agent`          | Rótulo           | O que é                                                          | Cor (claro / escuro)  |
+| ---------------- | ---------------- | ---------------------------------------------------------------- | --------------------- |
+| `julia_turn`     | Julia (turno)    | Turno de atendimento no WhatsApp, nos modos `active` e `post_sale` | `#9c7c0b` / `#af8f15` |
+| `julia_followup` | Follow-up        | Decisão de re-engajamento depois do silêncio do cliente          | `#2171cc` / `#4087de` |
+| `julia_local`    | Agente de local  | Resolução do local do velório com grounding no Google Maps       | `#d35f00` / `#da6c1e` |
+| `julia_media`    | Análise de mídia | Transcrição de áudio e leitura de imagem e PDF                   | `#8254c4` / `#956ed2` |
+
+As cores são fixas por identidade do agente (nunca por ranking) e foram validadas para daltonismo nos dois temas — usar as mesmas no FloraHub.
+
+| `task`      | Rótulo            |
+| ----------- | ----------------- |
+| `active`    | Venda             |
+| `post_sale` | Pós-venda         |
+| `decision`  | Decisão           |
+| `grounding` | Grounding no Maps |
+| `audio`     | Áudio             |
+| `image`     | Imagem            |
+| `document`  | PDF               |
+| `null`      | Sem tarefa        |
+
+| `errorKind`      | Rótulo                      |
+| ---------------- | --------------------------- |
+| `timeout`        | Timeout                     |
+| `rate_limit`     | Limite de requisições (429) |
+| `auth`           | Autenticação                |
+| `bad_request`    | Requisição inválida (4xx)   |
+| `provider_error` | Erro do provedor (5xx)      |
+| `network`        | Rede                        |
+| `unknown`        | Desconhecido                |
+
+Fonte no código: `src/lib/julia/model-usage/agents.ts`, `classify-error.ts` e `report-types.ts` (tipos TypeScript da resposta, prontos para copiar).

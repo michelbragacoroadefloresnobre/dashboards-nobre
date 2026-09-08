@@ -5,7 +5,13 @@ import { Sidebar } from "@/app/(dashboard)/_components/sidebar";
 import { useFullscreen } from "@/app/(dashboard)/_hooks/use-fullscreen";
 import { useZoom } from "@/app/(dashboard)/_hooks/use-zoom";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  isAdmin,
+}: {
+  children: React.ReactNode;
+  isAdmin: boolean;
+}) {
   const { isFullscreen, toggleFullscreen } = useFullscreen();
   const { zoomLevel, zoomIn, zoomOut, isMaxZoom, isMinZoom } = useZoom();
 
@@ -20,7 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }}
       >
         {/* Sidebar — hidden in fullscreen */}
-        {!isFullscreen && <Sidebar />}
+        {!isFullscreen && <Sidebar isAdmin={isAdmin} />}
 
         {/* Dashboard content area */}
         <main className="flex-1 h-full overflow-hidden">
