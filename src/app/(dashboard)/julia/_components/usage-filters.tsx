@@ -13,6 +13,7 @@ import {
   JULIA_AGENTS,
   type JuliaAgent,
 } from "@/lib/julia-agents";
+import type { FocusEvent } from "react";
 
 const LABEL_CLASS =
   "text-[11px] uppercase tracking-widest text-text-muted font-semibold";
@@ -43,17 +44,22 @@ function chipClass(active: boolean): string {
   }`;
 }
 
+type TimeField = "customStartTime" | "customEndTime";
+
 interface UsageFiltersBarProps {
   filters: UsageFilters;
-  /** Today in America/Sao_Paulo ("YYYY-MM-DD"): the custom range cannot go past it. */
-  maxDate: string;
+  /** Today in America/Sao_Paulo ("YYYY-MM-DD"): the custom range cannot start after it. */
+  maxStartDate: string;
+  /** Tomorrow in America/Sao_Paulo: the exclusive end may reach midnight after today. */
+  maxEndDate: string;
   rangeError: string | null;
   onChange: (patch: Partial<UsageFilters>) => void;
 }
 
 export function UsageFiltersBar({
   filters,
-  maxDate,
+  maxStartDate,
+  maxEndDate,
   rangeError,
   onChange,
 }: UsageFiltersBarProps) {
@@ -61,6 +67,7 @@ export function UsageFiltersBar({
   const selected: JuliaAgent[] = allSelected
     ? [...JULIA_AGENTS]
     : filters.agents;
+  const invalid = rangeError !== null;
 
   function toggleAgent(agent: JuliaAgent) {
     const isSelected = selected.includes(agent);
@@ -70,6 +77,17 @@ export function UsageFiltersBar({
       ? selected.filter((item) => item !== agent)
       : [...selected, agent];
     onChange({ agents: normalizeAgents(next) });
+  }
+
+  // A time is always required. The browser reports "" while a time is being
+  // typed and when the field is cleared: keep the current value, and put it
+  // back on screen when the field loses focus still empty.
+  function updateTime(field: TimeField, value: string) {
+    if (value) onChange({ [field]: value });
+  }
+
+  function restoreTime(event: FocusEvent<HTMLInputElement>, field: TimeField) {
+    if (!event.target.value) event.target.value = filters[field];
   }
 
   return (
@@ -107,34 +125,74 @@ export function UsageFiltersBar({
         </div>
       </div>
 
-      {/* Custom range */}
+      {/* Custom range: [start, end) with date and time on both sides. The end
+          is exclusive, so a whole day is 00:00 to 00:00 of the next day. */}
       {filters.preset === "custom" && (
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1.5 text-[12.5px] text-text-secondary">
-            De
-            <input
-              type="date"
-              value={filters.customStart}
-              max={maxDate}
-              aria-invalid={rangeError !== null}
-              onChange={(event) =>
-                onChange({ customStart: event.target.value })
-              }
-              className={DATE_INPUT_CLASS}
-            />
-          </label>
-          <label className="flex items-center gap-1.5 text-[12.5px] text-text-secondary">
-            Até
-            <input
-              type="date"
-              value={filters.customEnd}
-              min={filters.customStart}
-              max={maxDate}
-              aria-invalid={rangeError !== null}
-              onChange={(event) => onChange({ customEnd: event.target.value })}
-              className={DATE_INPUT_CLASS}
-            />
-          </label>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="flex items-center gap-1.5 text-[12.5px] text-text-secondary">
+            <label className="flex items-center gap-1.5">
+              De
+              <input
+                type="date"
+                value={filters.customStart}
+                max={maxStartDate}
+                aria-invalid={invalid}
+                onChange={(event) =>
+                  onChange({ customStart: event.target.value })
+                }
+                className={DATE_INPUT_CLASS}
+              />
+            </label>
+            <label className="flex items-center gap-1.5">
+              às
+              <input
+                type="time"
+                required
+                value={filters.customStartTime}
+                aria-label="Hora inicial"
+                title="Hora inicial (inclusiva)."
+                aria-invalid={invalid}
+                onChange={(event) =>
+                  updateTime("customStartTime", event.target.value)
+                }
+                onBlur={(event) => restoreTime(event, "customStartTime")}
+                className={DATE_INPUT_CLASS}
+              />
+            </label>
+          </div>
+          <div className="flex items-center gap-1.5 text-[12.5px] text-text-secondary">
+            <label className="flex items-center gap-1.5">
+              Até
+              <input
+                type="date"
+                value={filters.customEnd}
+                min={filters.customStart}
+                max={maxEndDate}
+                aria-invalid={invalid}
+                onChange={(event) => onChange({ customEnd: event.target.value })}
+                className={DATE_INPUT_CLASS}
+              />
+            </label>
+            <label className="flex items-center gap-1.5">
+              às
+              <input
+                type="time"
+                required
+                value={filters.customEndTime}
+                aria-label="Hora final"
+                title="Hora final (exclusiva). Dia inteiro: 00:00 do dia seguinte."
+                aria-invalid={invalid}
+                onChange={(event) =>
+                  updateTime("customEndTime", event.target.value)
+                }
+                onBlur={(event) => restoreTime(event, "customEndTime")}
+                className={DATE_INPUT_CLASS}
+              />
+            </label>
+          </div>
+          <span className="text-[11px] text-text-muted">
+            Fim exclusivo · dia inteiro = 00:00 até 00:00 do dia seguinte
+          </span>
         </div>
       )}
 

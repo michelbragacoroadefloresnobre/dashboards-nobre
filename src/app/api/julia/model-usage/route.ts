@@ -2,8 +2,11 @@ import { withAuth, withErrorHandler } from "@/lib/api-handler";
 import { HttpException } from "@/lib/http-exception";
 import { isJuliaAgent, JULIA_AGENTS } from "@/lib/julia-agents";
 import { FILTER_PARAMS, parseAgentsParam } from "./filters";
+import {
+  normalizeUsageReport,
+  type RawJuliaModelUsageReport,
+} from "./normalize";
 import { resolveUsageRange } from "./range";
-import type { JuliaModelUsageReport } from "./types";
 
 const API_PATH = "/api/v1/dashboard/julia/model-usage";
 
@@ -41,11 +44,16 @@ function resolveAgents(params: URLSearchParams): string[] {
 }
 
 // GET /api/julia/model-usage
-//   ?periodo=12h|24h|7d|30d|custom&inicio=YYYY-MM-DD&fim=YYYY-MM-DD&agentes=a,b
+//   ?periodo=12h|24h|7d|30d|custom&inicio=YYYY-MM-DD&fim=YYYY-MM-DD
+//   &horaInicio=HH:mm&horaFim=HH:mm&agentes=a,b
 //
-// Admin only. Resolves the page filters in America/Sao_Paulo and passes the
-// report of the main system through unchanged (contract in the dashboard-api
-// skill, "API de Custos da Julia").
+// `horaInicio`/`horaFim` only apply to `custom` and default to 00:00: the
+// window is [inicio horaInicio, fim horaFim), so a whole day ends at 00:00 of
+// the next day.
+//
+// Admin only. Resolves the page filters in America/Sao_Paulo and returns the
+// report of the main system (contract in the dashboard-api skill, "API de
+// Custos da Julia"), normalized to the version 2 cost accounting.
 export const GET = withErrorHandler(
   withAuth(
     async (request) => {
@@ -59,12 +67,12 @@ export const GET = withErrorHandler(
       });
       if (agents.length) query.set("agents", agents.join(","));
 
-      const report = await fetchApi<JuliaModelUsageReport>(
+      const raw = await fetchApi<RawJuliaModelUsageReport>(
         `${API_PATH}?${query}`,
       );
 
       return Response.json(
-        { data: report },
+        { data: normalizeUsageReport(raw) },
         { headers: { "Cache-Control": "no-store, max-age=0" } },
       );
     },

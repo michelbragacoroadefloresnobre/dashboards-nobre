@@ -14,7 +14,7 @@ import { JULIA_USAGE_REFRESH_MS, useJuliaUsage } from "../_hooks/use-julia-usage
 import { UsageFiltersBar } from "./usage-filters";
 import {
   type CostMetric,
-  defaultCostMetric,
+  DEFAULT_COST_METRIC,
   formatClock,
   formatDateTime,
   shiftDateOnly,
@@ -58,6 +58,7 @@ function DashboardSkeleton() {
           />
         ))}
       </div>
+      <div className="h-[150px] animate-pulse rounded-2xl border border-border bg-bg-card" />
       <div className="grid grid-cols-2 gap-4 2xl:grid-cols-4">
         {CHART_SKELETONS.map((key) => (
           <div
@@ -77,9 +78,12 @@ export function JuliaUsageDashboard() {
 
   // Calendar "today" in São Paulo, fixed for the life of the page.
   const [today] = useState(() => todayInSaoPaulo());
+  const tomorrow = useMemo(() => shiftDateOnly(today, 1), [today]);
+  // Default custom range: the last 7 whole days. The end is exclusive, so it
+  // is midnight after today.
   const fallbackRange = useMemo(
-    () => ({ start: shiftDateOnly(today, -6), end: today }),
-    [today],
+    () => ({ start: shiftDateOnly(today, -6), end: tomorrow }),
+    [today, tomorrow],
   );
 
   // The URL is the single source of truth for the filters.
@@ -102,17 +106,16 @@ export function JuliaUsageDashboard() {
 
   const rangeError =
     filters.preset === "custom"
-      ? customRangeError(filters.customStart, filters.customEnd)
+      ? customRangeError(filters)
       : null;
 
   const query = useJuliaUsage(filters, rangeError === null);
   const report = query.data;
 
-  // Chart metric choices are view state; `null` follows the data-driven default.
-  const [costChoice, setCostChoice] = useState<CostMetric | null>(null);
+  // Chart metric choices are view state, not URL state.
+  const [costMetric, setCostMetric] =
+    useState<CostMetric>(DEFAULT_COST_METRIC);
   const [tokenMetric, setTokenMetric] = useState<TokenMetric>("total");
-  const costMetric: CostMetric =
-    costChoice ?? (report ? defaultCostMetric(report.totals) : "costUsd");
 
   const agents = useMemo<JuliaAgent[]>(
     () => (filters.agents.length ? filters.agents : [...JULIA_AGENTS]),
@@ -131,8 +134,8 @@ export function JuliaUsageDashboard() {
               Relatório da Julia
             </h1>
             <p className="mt-0.5 text-[13px] text-text-secondary">
-              Consumo de modelo de IA da Julia e dos sub-agentes: custo,
-              requisições, erros, tokens e cache de prompt.
+              Consumo de modelo de IA da Julia e dos sub-agentes: custo
+              estimado, requisições, erros, tokens e cache de prompt.
             </p>
           </div>
 
@@ -180,7 +183,8 @@ export function JuliaUsageDashboard() {
 
         <UsageFiltersBar
           filters={filters}
-          maxDate={today}
+          maxStartDate={today}
+          maxEndDate={tomorrow}
           rangeError={rangeError}
           onChange={updateFilters}
         />
@@ -219,8 +223,9 @@ export function JuliaUsageDashboard() {
               <UsageReport
                 report={report}
                 agents={agents}
+                allAgentsSelected={filters.agents.length === 0}
                 costMetric={costMetric}
-                onCostMetricChange={setCostChoice}
+                onCostMetricChange={setCostMetric}
                 tokenMetric={tokenMetric}
                 onTokenMetricChange={setTokenMetric}
               />

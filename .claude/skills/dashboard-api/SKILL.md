@@ -334,12 +334,13 @@ Erro de validação responde `400` com `{ "error": "...", "status": 400 }`.
       "buckets": ["2026-09-01T00:00", "2026-09-02T00:00"]
     },
     "firstRecordedAt": "2026-09-04T18:21:07.512Z" | null,
-    "totals": { ...UsageMeasures, ...UsageLatency },
+    "costAccounting": { ...CostAccounting },
+    "totals": { ...UsageMeasures, "costs": { ...Costs }, ...UsageLatency },
     "byAgent": [
-      { "agent": "julia_turn", ...UsageMeasures, ...UsageLatency }
+      { "agent": "julia_turn", ...UsageMeasures, "costs": { ...Costs }, ...UsageLatency }
     ],
     "series": [
-      { "bucket": "2026-09-01T00:00", "agent": "julia_turn", ...UsageMeasures }
+      { "bucket": "2026-09-01T00:00", "agent": "julia_turn", ...UsageMeasures, "costs": { ...Costs } }
     ],
     "byModel": [
       {
@@ -348,6 +349,7 @@ Erro de validação responde `400` com `{ "error": "...", "status": 400 }`.
         "model": "google/gemini-3.8-flash",
         "providers": "vertex" | "google, vertex" | null,
         ...UsageMeasures,
+        "costs": { ...Costs },
         ...UsageLatency
       }
     ],
@@ -373,8 +375,9 @@ Erro de validação responde `400` com `{ "error": "...", "status": 400 }`.
 | `errors`            | number | Tentativas que terminaram em erro.                                                                                                |
 | `executions`        | number | Chamadas distintas de `generateText`/`generateObject`; uma execução pode ter várias tentativas.                                   |
 | `failedExecutions`  | number | Execuções cuja última tentativa falhou.                                                                                           |
-| `costUsd`           | number | Custo cobrado pelo gateway, em USD. Hoje o Gemini é cobrado a US$ 0 nesta conta, então fica zerado.                               |
-| `marketCostUsd`     | number | Preço de tabela do modelo, em USD — o número que reflete consumo enquanto `costUsd` for zero.                                     |
+| `costUsd`           | number | **Legado.** Custo informado na resposta inicial do AI Gateway, sem enriquecimento posterior. Em BYOK pode ser zero e omitir adicionais lançados depois. Usar `costs`. |
+| `marketCostUsd`     | number | **Legado.** Preço de referência informado na resposta inicial. Não é o líquido da fatura Google. Usar `costs`.                    |
+| `costs`             | Costs  | Contabilidade de custos v2 (abaixo). Presente em `totals`, `byAgent`, `series` e `byModel`.                                        |
 | `inputTokens`       | number | Tokens de entrada, **cache incluso**.                                                                                             |
 | `cachedInputTokens` | number | Parte da entrada lida do cache de prompt.                                                                                         |
 | `cacheWriteTokens`  | number | Parte da entrada gravada no cache (só provedores que reportam gravação, como Anthropic; Gemini reporta só leitura).               |
@@ -384,6 +387,47 @@ Erro de validação responde `400` com `{ "error": "...", "status": 400 }`.
 ### `UsageLatency`
 
 `p50DurationMs` e `p95DurationMs` (`number | null`): percentis da duração das tentativas **com sucesso**, em milissegundos. `null` quando não há sucesso no grupo.
+
+### `Costs` (contabilidade de custos v2)
+
+A Julia roda com credencial própria (BYOK): o AI Gateway só debita adicionais e a inferência é estimada a preço de tabela do provedor. Cada valor é um subtotal **conhecido** — zero com chamadas pendentes/indisponíveis não comprova gratuidade. `resolvedRequests + pendingRequests + unavailableRequests === requests`.
+
+| Campo                      | Significado e uso no dashboard                                                                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gatewayUsd`               | Soma dos débitos conhecidos no saldo do Gateway, consultados posteriormente por geração. Inclui os adicionais.                                                                  |
+| `gatewaySurchargeUsd`      | Parcela de adicionais contida em `gatewayUsd`. Exibir como detalhamento; **não somar novamente**.                                                                              |
+| `providerEstimatedUsd`     | Custo BYOK a preço de referência, devolvido pelo Gateway. Zero nas gerações com credencial da Vercel (inferência já em `gatewayUsd`). Não inclui armazenamento do cache.        |
+| `estimatedInferenceUsd`    | **KPI recomendado.** Por chamada resolvida: `gatewayUsd + providerEstimatedUsd`. Enquanto a consulta estiver pendente/indisponível, usa o `marketCostUsd` original, se existir. |
+| `resolvedRequests`         | Chamadas com consulta de cobrança concluída. Não significa conciliação com a fatura Google.                                                                                     |
+| `pendingRequests`          | Chamadas com ID de geração que ainda aguardam consulta ou nova tentativa.                                                                                                       |
+| `unavailableRequests`      | Chamadas sem ID de geração ou cuja consulta esgotou as tentativas.                                                                                                              |
+| `missingEstimateRequests`  | Subconjunto das pendentes/indisponíveis sem custo de referência. Não contribui para `estimatedInferenceUsd`; o total está incompleto.                                          |
+
+### `costAccounting`
+
+```ts
+type CostAccounting = {
+  version: 2;
+  basis: "gateway_billing_and_provider_list_prices";
+  includesGoogleInvoiceAdjustments: false;
+  sharedCacheStorage: {
+    scope: "all_julia_agents";
+    allocation: "unallocated";
+    resources: number;
+    tokenHours: number;
+    unpricedTokenHours: number;
+    knownEstimatedUsd: number;
+    estimatedUsd: number | null;
+    firstRecordedAt: string | null;
+  };
+};
+```
+
+- `sharedCacheStorage` cobre **todos os agentes da Julia**, mesmo com `agents` filtrando um só. É custo compartilhado sem rateio: cartão separado, nunca somado a agente, modelo ou ponto da série. Mesmo `start/end`; cada recurso é cortado por criação, expiração, exclusão registrada e momento atual.
+- `estimatedUsd` é `null` quando falta tarifa em algum trecho ou ainda não há histórico de recursos; `knownEstimatedUsd` é o subtotal dos trechos com tarifa e `unpricedTokenHours` indica a lacuna. `firstRecordedAt` delimita o histórico observado; zero recursos significa zero no histórico registrado, não ausência de custo anterior.
+- Total com cache = `totals.costs.estimatedInferenceUsd + sharedCacheStorage.estimatedUsd` **somente** com todos os agentes selecionados, tarifa disponível e histórico do cache cobrindo o período. Exibir as pendências; nunca rotular como valor final da fatura.
+- Transição entre deployments: o consumidor detecta `data.costAccounting?.version === 2`. No FloraHub isso fica em `src/app/api/julia/model-usage/normalize.ts`, que sintetiza `costs` a partir dos campos legados quando a resposta ainda é v1.
+- Sincronização das cobranças: cron `/api/cron/julia-costs` a cada 5 minutos no sistema principal; refazer o fetch do dashboard a cada 60 s continua suficiente. Sem BigQuery, fatura, créditos, impostos ou conversão para BRL.
 
 ### Notas
 

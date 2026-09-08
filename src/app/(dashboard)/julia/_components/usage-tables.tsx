@@ -1,5 +1,6 @@
 import type {
   UsageByModel,
+  UsageCosts,
   UsageErrorRow,
 } from "@/app/api/julia/model-usage/types";
 import {
@@ -27,6 +28,11 @@ const TH_NUM = `${TH} text-right`;
 const TD = "whitespace-nowrap px-4 py-2.5 align-top text-xs text-text-primary";
 const TD_NUM = `${TD} text-right tabular-nums`;
 const SUB = "block text-[11px] text-text-muted";
+
+/** Calls still pending or without a possible billing query. */
+function unresolvedRequests(costs: UsageCosts): number {
+  return costs.pendingRequests + costs.unavailableRequests;
+}
 
 function TableCard({
   title,
@@ -103,14 +109,30 @@ export function UsageByModelTable({ rows }: { rows: UsageByModel[] }) {
             <th className={TH_NUM}>Cache gravado</th>
             <th className={TH_NUM}>Saída</th>
             <th className={TH_NUM}>Raciocínio</th>
-            <th className={TH_NUM}>Cobrado</th>
-            <th className={TH_NUM}>Mercado</th>
+            <th
+              className={TH_NUM}
+              title="Débito no Gateway + provedor (BYOK) por chamada consultada; preço de referência enquanto a consulta estiver pendente"
+            >
+              Inferência
+            </th>
+            <th
+              className={TH_NUM}
+              title="Débitos conhecidos no saldo do AI Gateway, adicionais inclusos"
+            >
+              Gateway
+            </th>
+            <th
+              className={TH_NUM}
+              title="Inferência com a credencial própria, a preço de tabela do provedor"
+            >
+              Provedor
+            </th>
             <th className={TH_NUM}>p50</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border-light">
           {rows.length === 0 && (
-            <EmptyRow colSpan={14}>
+            <EmptyRow colSpan={15}>
               Nenhuma chamada de modelo registrada no período.
             </EmptyRow>
           )}
@@ -148,8 +170,28 @@ export function UsageByModelTable({ rows }: { rows: UsageByModel[] }) {
               <td className={TD_NUM}>{formatCompact(row.cacheWriteTokens)}</td>
               <td className={TD_NUM}>{formatCompact(row.outputTokens)}</td>
               <td className={TD_NUM}>{formatCompact(row.reasoningTokens)}</td>
-              <td className={TD_NUM}>{formatUsd(row.costUsd)}</td>
-              <td className={TD_NUM}>{formatUsd(row.marketCostUsd)}</td>
+              <td className={TD_NUM}>
+                {formatUsd(row.costs.estimatedInferenceUsd)}
+                {unresolvedRequests(row.costs) > 0 && (
+                  <span
+                    className="block text-[11px] text-accent-gold"
+                    title="Chamadas cuja consulta de cobrança ainda não foi concluída"
+                  >
+                    {formatCount(unresolvedRequests(row.costs))} sem consulta
+                  </span>
+                )}
+              </td>
+              <td className={TD_NUM}>
+                {formatUsd(row.costs.gatewayUsd)}
+                {row.costs.gatewaySurchargeUsd > 0 && (
+                  <span className={SUB}>
+                    adicionais {formatUsd(row.costs.gatewaySurchargeUsd)}
+                  </span>
+                )}
+              </td>
+              <td className={TD_NUM}>
+                {formatUsd(row.costs.providerEstimatedUsd)}
+              </td>
               <td className={TD_NUM}>{formatDuration(row.p50DurationMs)}</td>
             </tr>
           ))}

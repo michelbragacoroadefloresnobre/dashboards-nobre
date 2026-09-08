@@ -1,5 +1,6 @@
 import type {
   UsageBucket,
+  UsageCosts,
   UsageMeasures,
 } from "@/app/api/julia/model-usage/types";
 
@@ -37,26 +38,90 @@ export function errorRate(measures: UsageMeasures): number | null {
 // Metric selectors of the charts
 // ---------------------------------------------------------------------------
 
-export type CostMetric = "costUsd" | "marketCostUsd";
+export type CostMetric = Extract<
+  keyof UsageCosts,
+  | "estimatedInferenceUsd"
+  | "gatewayUsd"
+  | "providerEstimatedUsd"
+  | "gatewaySurchargeUsd"
+>;
 
-export const COST_METRIC_ORDER: CostMetric[] = ["costUsd", "marketCostUsd"];
+/** The recommended KPI of the contract comes first and is the default. */
+export const DEFAULT_COST_METRIC: CostMetric = "estimatedInferenceUsd";
+
+export const COST_METRIC_ORDER: CostMetric[] = [
+  "estimatedInferenceUsd",
+  "gatewayUsd",
+  "providerEstimatedUsd",
+  "gatewaySurchargeUsd",
+];
 
 export const COST_METRICS: Record<
   CostMetric,
-  { label: string; tileLabel: string }
+  { label: string; tileLabel: string; description: string }
 > = {
-  costUsd: { label: "Cobrado", tileLabel: "Custo cobrado" },
-  marketCostUsd: { label: "Mercado", tileLabel: "Custo de mercado" },
+  estimatedInferenceUsd: {
+    label: "Inferência estimada",
+    tileLabel: "Inferência estimada",
+    description:
+      "Débito no Gateway + custo do provedor (BYOK) por chamada consultada; preço de referência enquanto a consulta estiver pendente.",
+  },
+  gatewayUsd: {
+    label: "Débito no Gateway",
+    tileLabel: "Débito no Gateway",
+    description:
+      "Débitos conhecidos no saldo do AI Gateway, adicionais inclusos.",
+  },
+  providerEstimatedUsd: {
+    label: "Provedor (BYOK)",
+    tileLabel: "Provedor (BYOK)",
+    description:
+      "Inferência com a credencial própria, a preço de tabela do provedor. Não inclui o armazenamento do cache.",
+  },
+  gatewaySurchargeUsd: {
+    label: "Adicionais do Gateway",
+    tileLabel: "Adicionais do Gateway",
+    description:
+      "Parcela de adicionais já contida no débito do Gateway; não somar de novo.",
+  },
 };
 
-/**
- * Gemini is billed at US$ 0 in this account, so while nothing is billed the
- * market price is the number that reflects consumption.
- */
-export function defaultCostMetric(totals: UsageMeasures): CostMetric {
-  return totals.costUsd === 0 && totals.marketCostUsd > 0
-    ? "marketCostUsd"
-    : "costUsd";
+/** The two components that explain the selected cost, for the tile's detail line. */
+export function costTileDetail(costs: UsageCosts, metric: CostMetric): string {
+  switch (metric) {
+    case "estimatedInferenceUsd":
+      return `Gateway ${formatUsd(costs.gatewayUsd)} · provedor ${formatUsd(costs.providerEstimatedUsd)}`;
+    case "gatewayUsd":
+      return `Adicionais ${formatUsd(costs.gatewaySurchargeUsd)} · provedor ${formatUsd(costs.providerEstimatedUsd)}`;
+    case "providerEstimatedUsd":
+    case "gatewaySurchargeUsd":
+      return `Gateway ${formatUsd(costs.gatewayUsd)} · inferência ${formatUsd(costs.estimatedInferenceUsd)}`;
+  }
+}
+
+/** Calls whose cost is not final yet or is missing; `null` when every call is resolved. */
+export function costCoverageIssues(costs: UsageCosts): string | null {
+  const parts: string[] = [];
+  if (costs.pendingRequests > 0) {
+    parts.push(
+      `${formatCount(costs.pendingRequests)} ${plural(costs.pendingRequests, "aguarda", "aguardam")} a consulta de cobrança`,
+    );
+  }
+  if (costs.unavailableRequests > 0) {
+    parts.push(
+      `${formatCount(costs.unavailableRequests)} sem consulta possível`,
+    );
+  }
+  if (costs.missingEstimateRequests > 0) {
+    parts.push(
+      `${formatCount(costs.missingEstimateRequests)} sem custo de referência (total incompleto)`,
+    );
+  }
+  return parts.length ? parts.join(" · ") : null;
+}
+
+export function plural(count: number, one: string, many: string): string {
+  return count === 1 ? one : many;
 }
 
 export type TokenMetric =
@@ -210,6 +275,12 @@ export function formatCompact(value: number | null | undefined): string {
 export function formatPercent(value: number | null | undefined): string {
   if (value === null || value === undefined) return "—";
   return percentFormatter.format(value);
+}
+
+/** Storage of the prompt cache is billed in token-hours. */
+export function formatTokenHours(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "—";
+  return `${compactFormatter.format(value)} tokens-hora`;
 }
 
 export function formatDuration(ms: number | null | undefined): string {

@@ -1,7 +1,10 @@
 import { HttpException } from "@/lib/http-exception";
 import { DateTime } from "luxon";
 import {
+  type CustomRange,
+  customRangeBounds,
   customRangeError,
+  DEFAULT_TIME,
   DEFAULT_PRESET,
   FILTER_PARAMS,
   isPeriodPreset,
@@ -20,8 +23,9 @@ export interface ResolvedRange {
 
 /**
  * Turns the page filters into the [start, end) window sent to the main system,
- * always in America/Sao_Paulo: rolling presets end now; custom dates cover the
- * whole days from `inicio` 00:00 to the end of `fim` (both inclusive).
+ * always in America/Sao_Paulo: rolling presets end now; custom ranges run from
+ * `inicio` at `horaInicio` to `fim` at `horaFim`, exclusive. Missing times
+ * default to 00:00, so a whole day is 00:00 to 00:00 of the next day.
  */
 export function resolveUsageRange(
   params: URLSearchParams,
@@ -36,16 +40,19 @@ export function resolveUsageRange(
   }
 
   if (preset === "custom") {
-    const start = params.get(FILTER_PARAMS.start) ?? "";
-    const end = params.get(FILTER_PARAMS.end) ?? "";
-    const error = customRangeError(start, end);
+    const range: CustomRange = {
+      customStart: params.get(FILTER_PARAMS.start) ?? "",
+      customEnd: params.get(FILTER_PARAMS.end) ?? "",
+      customStartTime: params.get(FILTER_PARAMS.startTime) ?? DEFAULT_TIME,
+      customEndTime: params.get(FILTER_PARAMS.endTime) ?? DEFAULT_TIME,
+    };
+    const error = customRangeError(range);
     if (error) throw new HttpException(400, error);
 
+    const bounds = customRangeBounds(range);
     return {
-      start: DateTime.fromISO(start, { zone: TIMEZONE }).startOf("day"),
-      end: DateTime.fromISO(end, { zone: TIMEZONE })
-        .startOf("day")
-        .plus({ days: 1 }),
+      start: DateTime.fromISO(bounds.start, { zone: TIMEZONE }),
+      end: DateTime.fromISO(bounds.end, { zone: TIMEZONE }),
     };
   }
 

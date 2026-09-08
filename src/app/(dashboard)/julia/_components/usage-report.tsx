@@ -30,6 +30,7 @@ import {
   TOKEN_METRICS,
   type TokenMetric,
 } from "./usage-format";
+import { UsageCostCard } from "./usage-cost-card";
 import { Notice } from "./usage-notice";
 import { UsageStatTiles } from "./usage-stat-tiles";
 import { UsageByModelTable, UsageErrorsTable } from "./usage-tables";
@@ -126,6 +127,8 @@ export interface UsageReportProps {
   report: JuliaModelUsageReport;
   /** Agents drawn on the charts: the selection, or every agent. */
   agents: JuliaAgent[];
+  /** The shared cache storage may only be added to the total with every agent selected. */
+  allAgentsSelected: boolean;
   costMetric: CostMetric;
   onCostMetricChange: (metric: CostMetric) => void;
   tokenMetric: TokenMetric;
@@ -135,6 +138,7 @@ export interface UsageReportProps {
 export function UsageReport({
   report,
   agents,
+  allAgentsSelected,
   costMetric,
   onCostMetricChange,
   tokenMetric,
@@ -144,7 +148,7 @@ export function UsageReport({
   const isRate = tokenConfig.kind === "rate";
 
   const costRows = useMemo(
-    () => agentRows(report, agents, (point) => point[costMetric], 0),
+    () => agentRows(report, agents, (point) => point.costs[costMetric], 0),
     [report, agents, costMetric],
   );
   const requestRows = useMemo(
@@ -186,6 +190,22 @@ export function UsageReport({
     <>
       <UsageStatTiles totals={report.totals} costMetric={costMetric} />
 
+      {report.costAccounting === null && (
+        <Notice tone="info" title="Contabilidade de custos antiga">
+          O sistema principal ainda responde sem o detalhamento de custos
+          (versão 2): os valores usam o preço de referência do Gateway, sem os
+          adicionais lançados depois nem o armazenamento do cache.
+        </Notice>
+      )}
+
+      <UsageCostCard
+        costs={report.totals.costs}
+        requests={report.totals.requests}
+        costAccounting={report.costAccounting}
+        allAgentsSelected={allAgentsSelected}
+        rangeStart={report.range.start}
+      />
+
       {trackingStartedInside && (
         <Notice tone="info" title="Registro parcial">
           O registro começou em {formatDateTime(report.firstRecordedAt)}; antes
@@ -197,7 +217,7 @@ export function UsageReport({
       <div className="grid grid-cols-2 gap-4 2xl:grid-cols-4">
         <AgentLineChart
           title="Custo por agente"
-          headline={formatUsd(report.totals[costMetric])}
+          headline={formatUsd(report.totals.costs[costMetric])}
           control={
             <MetricSelect
               label="Métrica de custo"

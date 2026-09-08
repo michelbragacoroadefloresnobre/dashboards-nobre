@@ -6,6 +6,7 @@ import {
   cacheRate,
   COST_METRICS,
   type CostMetric,
+  costTileDetail,
   errorRate,
   formatCompact,
   formatCount,
@@ -18,16 +19,22 @@ import {
 
 function StatTile({
   label,
+  title,
   value,
   detail,
 }: {
   label: string;
+  /** Tooltip explaining the measure. */
+  title?: string;
   value: string;
   detail: string;
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-1 rounded-2xl border border-border bg-bg-card px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.03)]">
-      <span className="text-[11px] uppercase tracking-widest text-text-muted font-semibold">
+      <span
+        className="text-[11px] uppercase tracking-widest text-text-muted font-semibold"
+        title={title}
+      >
         {label}
       </span>
       <span className="font-display text-[26px] font-bold tracking-tight leading-none text-text-primary truncate">
@@ -46,15 +53,13 @@ interface UsageStatTilesProps {
 }
 
 export function UsageStatTiles({ totals, costMetric }: UsageStatTilesProps) {
-  const otherCost: CostMetric =
-    costMetric === "costUsd" ? "marketCostUsd" : "costUsd";
-
   return (
     <div className="grid grid-cols-3 gap-4 2xl:grid-cols-6">
       <StatTile
         label={COST_METRICS[costMetric].tileLabel}
-        value={formatUsd(totals[costMetric])}
-        detail={`${COST_METRICS[otherCost].label} ${formatUsd(totals[otherCost])}`}
+        title={COST_METRICS[costMetric].description}
+        value={formatUsd(totals.costs[costMetric])}
+        detail={costTileDetail(totals.costs, costMetric)}
       />
       <StatTile
         label="Requisições"
